@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://{localhost}:3306/{DBNAME}
+    username: {USERNAME}
+    password: {PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate # 기존 테이블과 엔티티가 맞는지만 체크
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
