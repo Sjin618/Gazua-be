@@ -1,8 +1,8 @@
-package com.acc.gazua.domain.User.controller;
+package com.acc.gazua.domain.user.controller;
 
 
-import com.acc.gazua.domain.User.dto.UserSignUpRequest;
-import com.acc.gazua.domain.User.service.UserService;
+import com.acc.gazua.domain.user.dto.UserSignUpRequest;
+import com.acc.gazua.domain.user.service.UserService;
 import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;

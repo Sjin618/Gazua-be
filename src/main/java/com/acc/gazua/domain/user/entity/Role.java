@@ -1,4 +1,4 @@
-package com.acc.gazua.domain.User.entity;
+package com.acc.gazua.domain.user.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

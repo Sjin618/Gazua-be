@@ -1,6 +1,6 @@
-package com.acc.gazua.domain.User.dto;
+package com.acc.gazua.domain.user.dto;
 
-import com.acc.gazua.domain.User.entity.Gender;
+import com.acc.gazua.domain.user.entity.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

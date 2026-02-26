@@ -1,4 +1,4 @@
-package com.acc.gazua.domain.User.exception;
+package com.acc.gazua.domain.user.exception;
 
 import com.acc.gazua.global.dto.ErrorCode;
 

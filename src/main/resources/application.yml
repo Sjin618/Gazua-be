@@ -3,3 +3,8 @@ spring:
     name: gazua
   profiles:
     active: dev
+
+  servlet:
+    multipart:
+      max-file-size: 5MB #파일 하나의 최대 크기
+      max-request-size: 10MB #multipart 요청 하나의 최대 크기

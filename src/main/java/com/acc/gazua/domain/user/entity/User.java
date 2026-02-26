@@ -1,14 +1,15 @@
-package com.acc.gazua.domain.User.entity;
+package com.acc.gazua.domain.user.entity;
 
 import com.acc.gazua.global.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Entity(name = "users")
+@Entity
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "users")
 public class User extends BaseEntity {
     @Id @GeneratedValue
     @Column(name = "user_id")

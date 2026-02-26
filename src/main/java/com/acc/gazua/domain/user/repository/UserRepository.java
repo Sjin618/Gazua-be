@@ -1,6 +1,6 @@
-package com.acc.gazua.domain.User.repository;
+package com.acc.gazua.domain.user.repository;
 
-import com.acc.gazua.domain.User.entity.User;
+import com.acc.gazua.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

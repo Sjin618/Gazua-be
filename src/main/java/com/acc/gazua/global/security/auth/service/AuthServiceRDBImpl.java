@@ -1,17 +1,15 @@
 package com.acc.gazua.global.security.auth.service;
 
 
-import com.acc.gazua.domain.User.entity.User;
-import com.acc.gazua.domain.User.exception.UserException;
-import com.acc.gazua.domain.User.repository.UserRepository;
+import com.acc.gazua.domain.user.entity.User;
+import com.acc.gazua.domain.user.exception.UserException;
+import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.security.auth.dto.LoginRequest;
 import com.acc.gazua.global.security.auth.entity.RefreshToken;
 import com.acc.gazua.global.security.auth.repository.RefreshTokenRepository;
-import com.acc.gazua.global.security.details.CustomUserDetails;
 import com.acc.gazua.global.security.exception.JwtCustomException;
 import com.acc.gazua.global.security.provider.JwtProvider;
-import com.acc.gazua.global.security.provider.dto.RefreshTokenDto;
 import com.acc.gazua.global.security.provider.dto.TokenDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,7 +54,7 @@ public class AuthServiceRDBImpl implements AuthService{
     //유저 로그아웃
     public void logout(String refreshToken){
         //RDB에서 refresh token 제거
-        refreshTokenRepository.deleteByCurrentToken(refreshToken);
+        refreshTokenRepository.deleteByToken(refreshToken);
     }
 
     //access token 재발급

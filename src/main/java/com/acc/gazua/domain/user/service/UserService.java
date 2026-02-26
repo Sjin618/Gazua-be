@@ -1,11 +1,11 @@
-package com.acc.gazua.domain.User.service;
+package com.acc.gazua.domain.user.service;
 
 
-import com.acc.gazua.domain.User.dto.UserSignUpRequest;
-import com.acc.gazua.domain.User.entity.Role;
-import com.acc.gazua.domain.User.entity.User;
-import com.acc.gazua.domain.User.exception.UserException;
-import com.acc.gazua.domain.User.repository.UserRepository;
+import com.acc.gazua.domain.user.dto.UserSignUpRequest;
+import com.acc.gazua.domain.user.entity.Role;
+import com.acc.gazua.domain.user.entity.User;
+import com.acc.gazua.domain.user.exception.UserException;
+import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.security.auth.repository.RefreshTokenRepository;
 import com.acc.gazua.global.security.details.CustomUserDetails;
