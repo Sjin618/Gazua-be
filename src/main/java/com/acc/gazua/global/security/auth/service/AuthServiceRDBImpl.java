@@ -40,7 +40,17 @@ public class AuthServiceRDBImpl implements AuthService{
             throw new UserException(ErrorCode.DELETED_USER);
         }
 
-        return jwtProvider.createTokenDto(user.getId(), user.getRole().getKey());
+        TokenDto tokenDto = jwtProvider.createTokenDto(user.getId(), user.getRole().getKey());
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .expiredAt(tokenDto.getExpiredAt())
+                .userId(user.getId())
+                .token(tokenDto.getRefreshToken())
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+
+        return tokenDto;
     }
 
     //유저 로그아웃
