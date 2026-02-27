@@ -4,6 +4,8 @@ import com.acc.gazua.global.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter
 @Builder
@@ -20,7 +22,7 @@ public class User extends BaseEntity {
 
     private String password;
 
-    private String image; //회원가입 시 기본 이미지 사용, 정보 수정에서 이미지 설정
+    private String profileImage; //회원가입 시 기본 이미지 사용, 정보 수정에서 이미지 설정
 
     private String nickname; //닉네임 중복 가능
 
@@ -30,5 +32,14 @@ public class User extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Gender gender;
+    private Gender gender; //성별
+
+    @Column(nullable = false)
+    private String phoneNumber; //전화 번호
+
+    @Column(nullable = false)
+    private LocalDate birthDate; //생년월일
+
+    @Column(nullable = false)
+    private String name; //본명
 }
