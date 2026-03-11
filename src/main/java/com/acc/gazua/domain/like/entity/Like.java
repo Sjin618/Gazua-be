@@ -10,7 +10,10 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "likes")
+@Table(name = "likes",uniqueConstraints = @UniqueConstraint(
+        name = "uk_accommodation_user",
+        columnNames = {"accommodation_id,user_id"}
+))
 public class Like {
     @Id @GeneratedValue
     @Column(name = "likes_id")
