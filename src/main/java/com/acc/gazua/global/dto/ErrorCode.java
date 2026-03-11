@@ -18,6 +18,12 @@ public enum ErrorCode {
     DELETED_USER(400,"U003","탈퇴한 계정입니다."),
     USER_NOT_FOUND(400,"U004","존재하지 않는 회원입니다."),
 
+    //숙소 관련 에러
+    ACCOMMODATION_NOT_FOUND(400,"A001","존재하지 않는 숙소입니다."),
+
+    //좋아요 관련 에러
+    ALREADY_LIKE(400,"L001","이미 좋아요한 숙소입니다."),
+
     //Jwt 관련 에러
     INVALID_TOKEN(401,"J001","잘못된 서명 또는 유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(401,"J002","만료된 토큰입니다. 다시 로그인하거나 갱신해주세요."),

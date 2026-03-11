@@ -1,9 +1,9 @@
 package com.acc.gazua.domain.like.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.acc.gazua.global.security.details.CustomUserDetails;
 
-@Service
-@RequiredArgsConstructor
-public class LikeService {
+public interface LikeService {
+    void createLike(Long accId, CustomUserDetails userDetails);
+
+    void deleteLike(Long accId,CustomUserDetails userDetails);
 }
