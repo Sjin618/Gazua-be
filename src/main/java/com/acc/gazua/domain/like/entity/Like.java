@@ -12,7 +12,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "likes",uniqueConstraints = @UniqueConstraint(
         name = "uk_accommodation_user",
-        columnNames = {"accommodation_id,user_id"}
+        columnNames = {"accommodation_id","user_id"}
 ))
 public class Like {
     @Id @GeneratedValue
@@ -20,6 +20,7 @@ public class Like {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user; //좋아요를 누른 사용자 ID
 
     @ManyToOne

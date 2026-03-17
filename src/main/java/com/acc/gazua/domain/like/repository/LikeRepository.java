@@ -12,6 +12,6 @@ public interface LikeRepository extends JpaRepository<Like,Long> {
     boolean existsByAccommodationIdAndUserId(Long accId,Long userId);
 
     @Modifying
-    @Query("DELETE FROM like l WHERE accommodation_id=:accId and user_id=:userId")
+    @Query("DELETE FROM Like l WHERE l.accommodation.id = :accId and l.user.id = :userId")
     void directDelete(Long accId,Long userId);
 }

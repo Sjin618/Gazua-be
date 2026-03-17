@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -42,4 +43,8 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private String name; //본명
+
+    public boolean equalsId(Long requestId){
+        return Objects.equals(this.id, requestId);
+    }
 }
