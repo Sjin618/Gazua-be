@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review,Long> {
 
-    @Query("SELECT COUNT(r) > 0 FROM review r WHERE r.accommodation.id = :accId and r.user.id = :userId")
+    @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.accommodation.id = :accId and r.user.id = :userId")
     boolean existsByAccommodationIdAndUserId(@Param("accId") Long accId,@Param("userId") Long userId);
 
     //리뷰 평점 낮은 순

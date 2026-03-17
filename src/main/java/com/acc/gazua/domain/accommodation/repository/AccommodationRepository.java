@@ -15,7 +15,7 @@ public interface AccommodationRepository extends JpaRepository<Accommodation,Lon
     @Modifying
     @Query("UPDATE Accommodation a " +
             "SET a.reviewCount = a.reviewCount + :deltaCount, " +
-            "    a.totalStar = a.totalStart + :deltaStar, " +
+            "    a.totalStar = a.totalStar + :deltaStar, " +
             "    a.averageStar = CASE WHEN (a.reviewCount + :deltaCount > 0)" +
             "                         THEN (a.totalStar + :deltaStar) / (a.reviewCount + :deltaCount)" +
             "                         ELSE 0 END " +
