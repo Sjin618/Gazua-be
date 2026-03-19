@@ -33,7 +33,7 @@ public class Review extends BaseTimeEntity {
 
     //요청자 권한 체크
     public void checkAuthority(Long requestUser){
-        if(!user.equalsId(requestUser)) throw new AccessDeniedException("권한이 존재하지 않습니다.");
+        if(!user.equalsId(requestUser)) throw new AccessDeniedException("리뷰에 관한 권한이 존재하지 않습니다.");
     }
 
     //리뷰의 내용,평점 변경

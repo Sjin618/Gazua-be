@@ -9,9 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review,Long> {
+
+    @Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.id = :id")
+    Optional<Review> findByIdWithUser(@Param("id") Long id);
 
     @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.accommodation.id = :accId and r.user.id = :userId")
     boolean existsByAccommodationIdAndUserId(@Param("accId") Long accId,@Param("userId") Long userId);

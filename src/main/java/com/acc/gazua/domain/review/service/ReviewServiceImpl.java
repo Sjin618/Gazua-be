@@ -3,15 +3,18 @@ package com.acc.gazua.domain.review.service;
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.reservation.entity.Reservation;
+import com.acc.gazua.domain.reservation.exception.ReservationException;
 import com.acc.gazua.domain.reservation.repository.ReservationRepository;
 import com.acc.gazua.domain.review.dto.ReviewCreateRequest;
 import com.acc.gazua.domain.review.dto.ReviewGetResponse;
 import com.acc.gazua.domain.review.dto.ReviewUpdateRequest;
 import com.acc.gazua.domain.review.entity.Review;
+import com.acc.gazua.domain.review.exception.ReviewException;
 import com.acc.gazua.domain.review.repository.ReviewRepository;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
+import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.page.PageHandler;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +40,8 @@ public class ReviewServiceImpl implements ReviewService{
         Long reservationId = request.reservationId();
         Long userId = userDetails.getUserId();
 
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow();
+        Reservation reservation = reservationRepository.findByIdWithUser(reservationId)
+                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUNT));
 
         //예약자와 리뷰 작성자가 동일한지 검증
         //체크아웃 완료된 예약에만 리뷰 가능
@@ -46,8 +49,9 @@ public class ReviewServiceImpl implements ReviewService{
 
         //이미 작성된 리뷰가 있는지 검증
         if(!reviewRepository.existsByAccommodationIdAndUserId(accId,userId)){
-
+            throw new ReviewException(ErrorCode.ALREADY_CREATE_REVIEW);
         }
+
         User user = userRepository.getReferenceById(userId);
         Accommodation accommodation = accommodationRepository.getReferenceById(accId);
 
@@ -70,7 +74,7 @@ public class ReviewServiceImpl implements ReviewService{
 
         //User 검증,숙소 평점 수정을 하기 때문에 연관 객체 바로 가져오도록 수정해야 함
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow();
+                .orElseThrow(() -> new ReviewException(ErrorCode.REVIEW_NOT_FOUND));
 
         //리뷰를 삭제할 권한이 있는지 확인(삭제 요청 사용자 == 리뷰 사용자)
         review.checkAuthority(userId);
