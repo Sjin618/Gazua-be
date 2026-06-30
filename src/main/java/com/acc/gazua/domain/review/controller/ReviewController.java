@@ -54,7 +54,7 @@ public class ReviewController {
     //비로그인 사용자 접근 가능
     @GetMapping
     public ResponseEntity<ApiResponse<CursorPage<ReviewGetResponse>>> getReviewList(@RequestParam String sortBy,
-                              @RequestParam(required = false) String cursorValue,
+                              @RequestParam(required = false) String cursorValue, //base64 인코딩 필요
                               @RequestParam(defaultValue = "10") int size,
                               @PathVariable("accId") Long accId) {
         CursorPage<ReviewGetResponse> reviewList = reviewService.getReviewList(sortBy, cursorValue, size, accId);

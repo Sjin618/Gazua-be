@@ -32,4 +32,5 @@ public class LikeController {
         return ResponseEntity.ok(ApiResponse.success("좋아요 취소를 성공하였습니다."));
     }
 
+
 }

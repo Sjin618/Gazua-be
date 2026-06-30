@@ -1,17 +1,27 @@
 package com.acc.gazua.domain.like.repository;
 
+import com.acc.gazua.domain.like.dto.LikeAccommodationDto;
 import com.acc.gazua.domain.like.entity.Like;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LikeRepository extends JpaRepository<Like,Long> {
+public interface LikeRepository extends JpaRepository<Like, Long> {
 
-    boolean existsByAccommodationIdAndUserId(Long accId,Long userId);
+    boolean existsByAccommodationIdAndUserId(Long accId, Long userId);
 
     @Modifying
     @Query("DELETE FROM Like l WHERE l.accommodation.id = :accId and l.user.id = :userId")
-    void directDelete(Long accId,Long userId);
+    void directDelete(Long accId, Long userId);
+
+    @Query("SELECT a.id,a.name,a.averageStar,a.reviewCount,a.type,a.thumbnailUrl " +
+            "FROM Like l JOIN l.accommodation a on l.accommodation.id = a.id " +
+            "WHERE l.user_id = :userId " +
+            "And l.id < :cursorId " +
+            "ORDER BY l.id DESC")
+    Slice<LikeAccommodationDto> getLikeList(Long userId, Long cursorId,Pageable page);
 }

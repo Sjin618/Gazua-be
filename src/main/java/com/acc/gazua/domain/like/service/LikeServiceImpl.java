@@ -3,17 +3,23 @@ package com.acc.gazua.domain.like.service;
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.exception.AccommodationException;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
+import com.acc.gazua.domain.like.dto.LikeAccommodationDto;
 import com.acc.gazua.domain.like.entity.Like;
 import com.acc.gazua.domain.like.exception.LikeException;
 import com.acc.gazua.domain.like.repository.LikeRepository;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
+import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -50,4 +56,20 @@ public class LikeServiceImpl implements LikeService{
         Long userId = userDetails.getUserId();
         likeRepository.directDelete(accId,userId);
     }
+
+    public CursorPage<LikeAccommodationDto> getLikeAccommodation(CustomUserDetails user, String cursorValue, int size){
+        Long userId = user.getUserId();
+        Long cursor = (cursorValue != null && !cursorValue.isBlank()) ?
+                Long.parseLong(cursorValue) :
+                Long.MAX_VALUE;
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+
+        Slice<LikeAccommodationDto> likeList = likeRepository.getLikeList(userId, cursor, pageRequest);
+
+        List<LikeAccommodationDto> list = likeList.stream().toList();
+
+        return new CursorPage<>(list, String.valueOf(list.get(size - 1).getId()), likeList.hasNext());
+    }
+
 }

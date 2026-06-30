@@ -45,7 +45,7 @@ public class ReviewServiceImpl implements ReviewService{
 
         //예약자와 리뷰 작성자가 동일한지 검증
         //체크아웃 완료된 예약에만 리뷰 가능
-        reservation.validateReservation(userId);
+        reservation.validateReviewAuthority(userId);
 
         //이미 작성된 리뷰가 있는지 검증
         if(!reviewRepository.existsByAccommodationIdAndUserId(accId,userId)){

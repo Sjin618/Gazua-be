@@ -12,5 +12,5 @@ import java.util.Optional;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     @Query("SELECT r FROM Reservation r JOIN FETCH r.user WHERE r.id = :id")
-    Optional<Reservation> findByIdWithUser(@Param("id") Long id);
+    Optional<Reservation> findByIdWithUser(@Param("id") Long reservationId);
 }

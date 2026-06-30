@@ -1,9 +1,12 @@
 package com.acc.gazua.domain.user.controller;
 
 
+import com.acc.gazua.domain.like.dto.LikeAccommodationDto;
+import com.acc.gazua.domain.like.service.LikeServiceImpl;
 import com.acc.gazua.domain.user.dto.UserSignUpRequest;
 import com.acc.gazua.domain.user.service.UserServiceImpl;
 import com.acc.gazua.global.dto.ApiResponse;
+import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -16,10 +19,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserServiceImpl userServiceImpl;
+    private final LikeServiceImpl likeService;
 
     //회원 가입
     @PostMapping("/signup")
@@ -47,6 +51,15 @@ public class UserController {
         response.addHeader("Set-Cookie",cookie.toString());
 
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
+    }
+
+    //좋아요 한 숙소 조회
+    @GetMapping("/me/likes")
+    public ResponseEntity<ApiResponse<CursorPage<LikeAccommodationDto>>> getLikesAccommodation(@AuthenticationPrincipal CustomUserDetails user,
+                                                                                               @RequestParam(required = false) String cursorValue,
+                                                                                               @RequestParam(defaultValue = "10") int size){
+        return ResponseEntity.ok(ApiResponse.success(likeService.getLikeAccommodation(user, cursorValue, size),
+                "좋아요 숙소 조회에 성공하였습니다."));
     }
 
     //내 정보 간소 조회

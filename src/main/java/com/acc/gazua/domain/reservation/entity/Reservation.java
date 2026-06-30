@@ -1,6 +1,7 @@
 package com.acc.gazua.domain.reservation.entity;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
+import com.acc.gazua.domain.room.entity.Room;
 import com.acc.gazua.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,14 +22,19 @@ public class Reservation {
     private User user; //예약한 사용자 ID
 
     @ManyToOne
-    private Accommodation accommodation; //예약한 숙소 ID
+    private Room room; //예약한 숙소의 방 ID
 
     @Enumerated(value = EnumType.STRING)
     private ReservationStatus status;
 
-    public boolean validateReservation(Long requestUserId){
-        if(!user.equalsId(requestUserId)) throw new AccessDeniedException("리뷰 권한이 존재하지 않습니다.");
+    public boolean validateReviewAuthority(Long userId){
+        equalsUser(userId);
         if(!ReservationStatus.COMPLETED.equals(status)) throw new IllegalStateException("완료된 예약에 대해서만 리뷰할 수 있습니다.");
+        return true;
+    }
+
+    public boolean equalsUser(Long userId){
+        if(!user.equalsId(userId)) throw new AccessDeniedException("접근 권한이 존재하지 않습니다.");
         return true;
     }
 

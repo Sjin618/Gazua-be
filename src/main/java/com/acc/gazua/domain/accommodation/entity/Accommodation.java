@@ -26,6 +26,13 @@ public class Accommodation {
 
     private String name; //숙소 이름
 
+    @Embedded private Address address; // 숙소 주소
+    @Embedded private CheckTime checkTime; //체크인,체크아웃 시간
+
+    @Enumerated(EnumType.STRING) private AccommodationType type;
+
+    private String thumbnailUrl;
+
     @Lob
     private String description; //숙소 소개 글
 

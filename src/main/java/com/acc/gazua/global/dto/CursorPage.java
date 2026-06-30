@@ -9,6 +9,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CursorPage <T>{
     private List<T> content;
-    private String nextCursorValue; // 정렬 기준 + "_" + cursorId
+    private String nextCursorValue; // 정렬 기준 값 + "_" + cursorId
     private boolean hasNext;
 }
