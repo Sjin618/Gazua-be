@@ -23,4 +23,6 @@ public class Room {
     private Integer maxCapacity; //최대인원
 
     private String name; //방 이름
+
+    private Integer amount;
 }
