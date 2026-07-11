@@ -1,0 +1,60 @@
+package com.acc.gazua.domain.accommodation.repository;
+
+import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
+import com.acc.gazua.domain.accommodation.entity.QAccommodation;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+
+@Repository
+@RequiredArgsConstructor
+public class AccommodationQueryRepository {
+    private final JPAQueryFactory jpaQueryFactory;
+    private final QAccommodation accommodation = QAccommodation.accommodation;
+
+    public List<AccommodationSearchDto> searchAccommodationSortByReviewDesc(String region,
+                                                    Integer personal,
+                                                    Long cursorReviewCount,
+                                                    Long cursorId,
+                                                    int size){
+        return jpaQueryFactory.select(Projections.constructor(AccommodationSearchDto.class,
+                        accommodation.id,
+                        accommodation.name,
+                        accommodation.thumbnailUrl,
+                        accommodation.averageStar,
+                        accommodation.reviewCount))
+                .from(accommodation)
+                .where(
+                        eqRegion(region),
+                        goePersonal(personal),
+                        reviewCountCursorCondition(cursorReviewCount,cursorId)
+                )
+                .orderBy(accommodation.reviewCount.desc(),accommodation.id.desc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    private BooleanExpression eqRegion(String region){
+        return StringUtils.hasText(region) ? accommodation.address.sido.eq(region) : null;
+    }
+
+    private BooleanExpression goePersonal(Integer personal){
+        return personal != null ? accommodation.maxCapacity.goe(personal) : null;
+    }
+
+    private BooleanExpression reviewCountCursorCondition(Long cursorReviewCount,Long cursorId){
+        if(cursorReviewCount == null || cursorId == null){
+            return null;
+        }
+        return accommodation.reviewCount.lt(cursorReviewCount)
+                .or(
+                        accommodation.reviewCount.eq(cursorReviewCount)
+                        .and(accommodation.id.lt(cursorId))
+                );
+    }
+}

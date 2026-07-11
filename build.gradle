@@ -46,7 +46,28 @@ dependencies {
 
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 
+	def queryDslVersion = "7.4.0"
+
+	// OpenFeign QueryDSL 의존성
+	implementation "io.github.openfeign.querydsl:querydsl-jpa:${queryDslVersion}"
+
+	// Q클래스 생성을 위한 애노테이션 프로세서 (OpenFeign 버전)
+	annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:${queryDslVersion}:jpa"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
 }
+
+// (선택사항) Q클래스가 생성될 경로 지정 및 build 시 clean 설정
+//def querydslDir = "$buildDir/generated/querydsl"
+//
+//tasks.withType(JavaCompile) {
+//	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+//}
+//
+//clean {
+//	delete file(querydslDir)
+//}
 
 tasks.named('test') {
 	useJUnitPlatform()

@@ -2,6 +2,7 @@ package com.acc.gazua.domain.accommodation.service;
 
 import com.acc.gazua.domain.accommodation.dto.AccommodationRegisterRequest;
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
+import com.acc.gazua.domain.accommodation.entity.CheckTime;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
@@ -15,6 +16,13 @@ import org.springframework.stereotype.Service;
 public class AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final UserRepository userRepository;
+
+    public void searchAccommodation(String region,
+                                    Integer personal,
+                                    CheckTime checkTime,
+                                    String sortType){
+
+    }
 
     public void registerAccommodation(AccommodationRegisterRequest registerRequest){
         User host = userRepository.findById(registerRequest.getHostId())
