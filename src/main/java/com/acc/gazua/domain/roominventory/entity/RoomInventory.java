@@ -20,11 +20,11 @@ public class RoomInventory {
 
     @ManyToOne
     @JoinColumn(name = "room_id")
-    private Room roomId;
+    private Room room;
 
     private LocalDate date;
 
     private Integer price;
 
-    private Integer amount;
+    private Integer stock;
 }

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Embeddable
@@ -14,6 +15,6 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class CheckTime {
 
-    private LocalTime checkInTime;
-    private LocalTime checkOutTime;
+    private LocalDate checkIn;
+    private LocalDate checkOut;
 }

@@ -1,9 +1,9 @@
 package com.acc.gazua.domain.accommodation.dto;
 
-import com.acc.gazua.domain.accommodation.entity.CheckTime;
+import lombok.Getter;
 
+@Getter
 public class AccommodationSearchRequest {
-    private String region;
-    private Long people;
-    private CheckTime checkTime;
+    private String cursor;
+    private Integer size;
 }

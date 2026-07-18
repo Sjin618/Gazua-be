@@ -40,7 +40,7 @@ public class Accommodation {
     @Column(precision = 15,scale = 1)
     private BigDecimal totalStar; //모든 리뷰 별점 합
 
-    private Long reviewCount; //리뷰 수
+    private Integer reviewCount; //리뷰 수
 
     private Integer maxCapacity; // 숙소가 가진 방들 중 최대 인원 수
 }

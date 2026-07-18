@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -19,7 +20,7 @@ public class AccommodationQueryRepository {
 
     public List<AccommodationSearchDto> searchAccommodationSortByReviewDesc(String region,
                                                     Integer personal,
-                                                    Long cursorReviewCount,
+                                                    Integer cursorReviewCount,
                                                     Long cursorId,
                                                     int size){
         return jpaQueryFactory.select(Projections.constructor(AccommodationSearchDto.class,
@@ -32,10 +33,32 @@ public class AccommodationQueryRepository {
                 .where(
                         eqRegion(region),
                         goePersonal(personal),
-                        reviewCountCursorCondition(cursorReviewCount,cursorId)
+                        reviewCountCursorCondition(cursorReviewCount, cursorId)
                 )
-                .orderBy(accommodation.reviewCount.desc(),accommodation.id.desc())
-                .limit(size + 1)
+                .orderBy(accommodation.reviewCount.desc(), accommodation.id.desc())
+                .limit(size)
+                .fetch();
+    }
+
+    public List<AccommodationSearchDto> searchAccommodationSortByAverageStarDesc(String region,
+                                                                                 Integer personal,
+                                                                                 BigDecimal cursorStar,
+                                                                                 Long cursorId,
+                                                                                 int size){
+        return jpaQueryFactory.select(Projections.constructor(AccommodationSearchDto.class,
+                        accommodation.id,
+                        accommodation.name,
+                        accommodation.thumbnailUrl,
+                        accommodation.averageStar,
+                        accommodation.reviewCount))
+                .from(accommodation)
+                .where(
+                        eqRegion(region),
+                        goePersonal(personal),
+                        averageStarCursorCondition(cursorStar, cursorId)
+                )
+                .orderBy(accommodation.averageStar.desc(), accommodation.id.desc())
+                .limit(size)
                 .fetch();
     }
 
@@ -47,7 +70,7 @@ public class AccommodationQueryRepository {
         return personal != null ? accommodation.maxCapacity.goe(personal) : null;
     }
 
-    private BooleanExpression reviewCountCursorCondition(Long cursorReviewCount,Long cursorId){
+    private BooleanExpression reviewCountCursorCondition(Integer cursorReviewCount,Long cursorId){
         if(cursorReviewCount == null || cursorId == null){
             return null;
         }
@@ -56,5 +79,16 @@ public class AccommodationQueryRepository {
                         accommodation.reviewCount.eq(cursorReviewCount)
                         .and(accommodation.id.lt(cursorId))
                 );
+    }
+
+    private BooleanExpression averageStarCursorCondition(BigDecimal cursorStar,Long cursorId){
+        if(cursorStar == null || cursorId == null){
+            return null;
+        }
+
+        return accommodation.averageStar.lt(cursorStar)
+                .or(
+                        accommodation.averageStar.eq(cursorStar)
+                        .and(accommodation.id.lt(cursorId)));
     }
 }
