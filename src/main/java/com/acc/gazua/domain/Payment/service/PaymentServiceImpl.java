@@ -35,7 +35,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         //예약 번호가 존재하는지 확인
         Reservation reservation = reservationRepository.findByIdWithUser(request.reservationId())
-                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUNT));
+                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND));
 
         //예약 사용자와 요청 사용자가 같은지 확인
         reservation.equalsUser(userId);

@@ -27,4 +27,10 @@ public class RoomInventory {
     private Integer price;
 
     private Integer stock;
+
+    public void decreaseStock(int days){
+        this.stock -= days;
+    }
+
+    public void increaseStock(int days){this.stock += days;}
 }

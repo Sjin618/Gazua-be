@@ -15,6 +15,6 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class CheckTime {
 
-    private LocalDate checkIn;
-    private LocalDate checkOut;
+    private LocalTime checkIn;
+    private LocalTime checkOut;
 }

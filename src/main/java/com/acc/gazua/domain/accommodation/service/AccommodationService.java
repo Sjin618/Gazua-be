@@ -4,6 +4,7 @@ import com.acc.gazua.domain.accommodation.dto.AccommodationRegisterRequest;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchRequest;
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
+import com.acc.gazua.domain.accommodation.entity.CheckDate;
 import com.acc.gazua.domain.accommodation.entity.CheckTime;
 import com.acc.gazua.domain.accommodation.repository.AccommodationQueryRepository;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
@@ -37,9 +38,9 @@ public class AccommodationService {
     private final RoomInventoryRepository roomInventoryRepository;
     private final JsonCursorUtils jsonCursorUtils;
 
-    public CursorPage<AccommodationSearchDto> searchAccommodation(String region,
+    public CursorPage<AccommodationSearchDto> searchAccommodation(Integer region,
                                     Integer personal,
-                                    CheckTime checkTime,
+                                    CheckDate checkDate,
                                     String sortType,
                                     AccommodationSearchRequest request){
         CustomCursor cursor = jsonCursorUtils.deserialize(request.getCursor());
@@ -77,7 +78,7 @@ public class AccommodationService {
         }
 
         //숙소에서 최저가 방 가격 가져오기
-        long stayDays = ChronoUnit.DAYS.between(checkTime.getCheckIn(),checkTime.getCheckOut());
+        long stayDays = ChronoUnit.DAYS.between(checkDate.getCheckIn(),checkDate.getCheckOut());
         if(stayDays <= 0){
             throw new IllegalArgumentException("체크아웃 날짜는 체크인 날짜보다 최소 1일 이상 커야합니다.");
         }
@@ -87,8 +88,8 @@ public class AccommodationService {
                 .toList();
 
         List<AvailableRoomDto> rooms = roomInventoryRepository.findAvailableRoomsWithTotalPrice(accIds,
-                checkTime.getCheckIn(),
-                checkTime.getCheckOut(),
+                checkDate.getCheckIn(),
+                checkDate.getCheckOut(),
                 stayDays);
 
         //첫 번째 쿼리에서 가져온 숙소와 두 번째 쿼리에서 가져온 최저가 가격 매칭시키기

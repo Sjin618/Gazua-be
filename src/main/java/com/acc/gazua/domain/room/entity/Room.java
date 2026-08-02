@@ -1,14 +1,13 @@
 package com.acc.gazua.domain.room.entity;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
+import com.acc.gazua.domain.accommodation.entity.CheckTime;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Builder
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Room {
@@ -26,5 +25,17 @@ public class Room {
 
     private String name; //방 이름
 
-    private Integer amount;
+    @Embedded
+    private CheckTime checkTime; //체크인, 체크아웃 시간
+
+    private Integer amount; //방 개수
+
+    private String thumbnailUrl; //방 썸네일 이미지
+    private Integer imageCount; //이미지 개수 반정규화
+
+    public void changeThumbnail(String imageUrl){
+        this.thumbnailUrl = imageUrl;
+    }
+
+    public void setImageCount(int imageCount){ this.imageCount = imageCount;}
 }

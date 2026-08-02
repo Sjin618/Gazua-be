@@ -29,7 +29,8 @@ public enum ErrorCode {
     ALREADY_CREATE_REVIEW(400,"RE002","해당 예약에 대해서 이미 작성한 리뷰가 존재합니다."),
 
     //예약 관련 에러
-    RESERVATION_NOT_FOUNT(400,"R001","존재하지 않는 예약입니다."),
+    RESERVATION_NOT_FOUND(400,"R001","존재하지 않는 예약입니다."),
+    RESERVATION_NOT_AVAILABLE(400,"R002","예약이 불가능합니다."),
 
     //Jwt 관련 에러
     INVALID_TOKEN(401,"J001","잘못된 서명 또는 유효하지 않은 토큰입니다."),

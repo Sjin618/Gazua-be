@@ -3,6 +3,7 @@ package com.acc.gazua.domain.accommodation.controller;
 import com.acc.gazua.domain.accommodation.dto.AccommodationRegisterRequest;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchRequest;
+import com.acc.gazua.domain.accommodation.entity.CheckDate;
 import com.acc.gazua.domain.accommodation.entity.CheckTime;
 import com.acc.gazua.domain.accommodation.service.AccommodationService;
 import com.acc.gazua.global.dto.ApiResponse;
@@ -22,14 +23,14 @@ public class AccommodationController {
     //지역, 인원 수, 기간 필터링 3개는 필수로 들어와야 함
     //평점, 리뷰 수, 가격 정렬 3개 중에 선택해서 들어옴
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorPage<AccommodationSearchDto>>> getAccommodationList(@RequestParam String region,
+    public ResponseEntity<ApiResponse<CursorPage<AccommodationSearchDto>>> getAccommodationList(@RequestParam Integer region,
                                      @RequestParam Integer personal,
-                                     @RequestParam CheckTime checkTime,
+                                     @RequestParam CheckDate checkDate,
                                      @RequestParam(required = false) String sortType,
                                      @RequestBody(required = false) AccommodationSearchRequest request){
         CursorPage<AccommodationSearchDto> accommodationPage = accommodationService.searchAccommodation(region,
                 personal,
-                checkTime,
+                checkDate,
                 sortType,
                 request);
         return ResponseEntity.ok(ApiResponse.success(accommodationPage,"숙소 조회 성공"));

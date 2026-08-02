@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -41,7 +40,7 @@ public class ReviewServiceImpl implements ReviewService{
         Long userId = userDetails.getUserId();
 
         Reservation reservation = reservationRepository.findByIdWithUser(reservationId)
-                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUNT));
+                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND));
 
         //예약자와 리뷰 작성자가 동일한지 검증
         //체크아웃 완료된 예약에만 리뷰 가능
@@ -108,7 +107,7 @@ public class ReviewServiceImpl implements ReviewService{
                                                           int size,
                                                           Long accId) {
         //정렬 기준이 없을 시 에러
-        if(sortBy == null && sortBy.isBlank()){
+        if(sortBy == null || sortBy.isBlank()){
             throw new IllegalArgumentException("정렬 기준 입력은 필수입니다.");
         }
 

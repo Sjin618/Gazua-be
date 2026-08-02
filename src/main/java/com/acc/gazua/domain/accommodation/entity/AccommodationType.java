@@ -6,7 +6,9 @@ public enum AccommodationType {
     MOTEL("모텔"),
     HOTEL("호텔"),
     PENSION("펜션"),
-    CAMPING("캠핑");
+    CAMPING("캠핑"),
+    GUEST_HOUSE("게스트하우스"),
+    HANOK("한옥");
 
     private final String name;
 
