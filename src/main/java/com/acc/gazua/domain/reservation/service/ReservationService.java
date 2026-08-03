@@ -173,7 +173,7 @@ public class ReservationService {
         List<ReservationGetResponse> list = reservationList.getContent();
 
         ReservationGetResponse lastItem = list.get(list.size() - 1);
-        String encodedCursor = jsonCursorUtils.serialize(new CustomCursor(null, lastItem.id()));
+        String encodedCursor = jsonCursorUtils.serialize(new CustomCursor(null, lastItem.getId()));
 
         return new CursorPage<>(list, encodedCursor, reservationList.hasNext());
 
