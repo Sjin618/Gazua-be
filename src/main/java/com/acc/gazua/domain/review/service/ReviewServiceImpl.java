@@ -15,6 +15,7 @@ import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.page.JsonCursorUtils;
 import com.acc.gazua.global.page.PageHandler;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -86,7 +87,7 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public void updateReview(CustomUserDetails userDetails, ReviewUpdateRequest request, Long reviewId,Long accId) {
+    public void updateReview(CustomUserDetails userDetails, ReviewUpdateRequest request, Long reviewId, Long accId) {
         Long userId = userDetails.getUserId();
 
         Review review = reviewRepository.findById(reviewId)
@@ -96,14 +97,14 @@ public class ReviewServiceImpl implements ReviewService{
         review.checkAuthority(userId);
 
         //숙소의 평점 수정
-        accommodationRepository.updateStats(accId,0L,request.star().subtract(review.getStar()));
+        accommodationRepository.updateStats(accId, 0L, request.star().subtract(review.getStar()));
 
         //리뷰의 내용,평점 변경
-        review.changeReview(request.sentence(),request.star());
+        review.changeReview(request.sentence(), request.star());
     }
 
     public CursorPage<ReviewGetResponse> getReviewList(String sortBy,
-                                                          String cursorValue,
+                                                          String cursor,
                                                           int size,
                                                           Long accId) {
         //정렬 기준이 없을 시 에러
@@ -117,9 +118,9 @@ public class ReviewServiceImpl implements ReviewService{
         PageHandler<ReviewGetResponse> pageHandler = pageHandlers.stream()
                 .filter(p -> p.supports(sortBy))
                 .findAny()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 정렬 타입입니다."));
 
-        List<ReviewGetResponse> list = pageHandler.fetch(accId, cursorValue, limit);
+        List<ReviewGetResponse> list = pageHandler.fetch(accId, cursor, limit);
 
         //리스트가 비어있을 시 리뷰가 더이상 없다는 뜻
         //빈 리스트 반환

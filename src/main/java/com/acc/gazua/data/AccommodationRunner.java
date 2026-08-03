@@ -2,7 +2,7 @@ package com.acc.gazua.data;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.entity.AccommodationType;
-import com.acc.gazua.domain.accommodation.entity.CheckTime;
+import com.acc.gazua.global.entity.CheckTime;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.room.entity.Room;
 import com.acc.gazua.domain.room.repository.RoomRepository;

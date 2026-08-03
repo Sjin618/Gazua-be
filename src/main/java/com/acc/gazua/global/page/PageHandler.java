@@ -6,7 +6,7 @@ public interface PageHandler <T> {
 
     boolean supports(String sortBy);
 
-    List<T> fetch(Object searchId,String cursor,int limit);
+    List<T> fetch(Long accId,String cursor,int limit);
 
     String createCursor(T lastItem);
 }

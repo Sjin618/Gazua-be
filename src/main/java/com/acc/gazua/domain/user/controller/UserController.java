@@ -56,9 +56,9 @@ public class UserController {
     //좋아요 한 숙소 조회
     @GetMapping("/me/likes")
     public ResponseEntity<ApiResponse<CursorPage<LikeAccommodationDto>>> getLikesAccommodation(@AuthenticationPrincipal CustomUserDetails user,
-                                                                                               @RequestParam(required = false) String cursorValue,
+                                                                                               @RequestParam(required = false) String cursor,
                                                                                                @RequestParam(defaultValue = "10") int size){
-        return ResponseEntity.ok(ApiResponse.success(likeService.getLikeAccommodation(user, cursorValue, size),
+        return ResponseEntity.ok(ApiResponse.success(likeService.getLikeAccommodation(user, cursor, size),
                 "좋아요 숙소 조회에 성공하였습니다."));
     }
 

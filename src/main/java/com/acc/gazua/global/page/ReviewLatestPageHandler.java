@@ -2,6 +2,7 @@ package com.acc.gazua.global.page;
 
 import com.acc.gazua.domain.review.dto.ReviewGetResponse;
 import com.acc.gazua.domain.review.repository.ReviewRepository;
+import com.acc.gazua.global.dto.CustomCursor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewLatestPageHandler implements PageHandler<ReviewGetResponse> {
     private final ReviewRepository reviewRepository;
+    private final JsonCursorUtils jsonCursorUtils;
 
     @Override
     public boolean supports(String sortBy) {
@@ -18,24 +20,18 @@ public class ReviewLatestPageHandler implements PageHandler<ReviewGetResponse> {
     }
 
     @Override
-    public List<ReviewGetResponse> fetch(Object searchId, String cursor, int limit) {
+    public List<ReviewGetResponse> fetch(Long accId, String cursor, int limit) {
         Long reviewId = null;
 
         if(cursor != null && !cursor.isBlank()){
-            try{
-                reviewId = Long.parseLong(cursor);
-            }catch(Exception e){
-                throw new IllegalArgumentException("유효하지 않은 커서 타입입니다.");
-            }
+            reviewId = jsonCursorUtils.deserialize(cursor).cursorId();
         }
-
-        Long accId = Long.parseLong(searchId.toString());
-
         return reviewRepository.findByLatestCursor(reviewId, accId, limit);
     }
 
     @Override
     public String createCursor(ReviewGetResponse lastItem) {
-        return String.valueOf(lastItem.getReviewId());
+        return jsonCursorUtils.serialize(new CustomCursor(null,lastItem.getReviewId()));
     }
+
 }

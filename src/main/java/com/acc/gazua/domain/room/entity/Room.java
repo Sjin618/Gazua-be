@@ -1,7 +1,7 @@
 package com.acc.gazua.domain.room.entity;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
-import com.acc.gazua.domain.accommodation.entity.CheckTime;
+import com.acc.gazua.global.entity.CheckTime;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +15,7 @@ public class Room {
     @Column(name = "room_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accommodation_id")
     private Accommodation accommodation;
 

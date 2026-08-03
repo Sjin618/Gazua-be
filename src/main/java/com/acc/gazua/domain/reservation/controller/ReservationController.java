@@ -1,12 +1,14 @@
 package com.acc.gazua.domain.reservation.controller;
 
 import com.acc.gazua.domain.reservation.dto.ReservationConfirmRequest;
+import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;
 import com.acc.gazua.domain.reservation.entity.ReservationStatus;
 import com.acc.gazua.domain.reservation.service.ReservationFacade;
 import com.acc.gazua.domain.reservation.service.ReservationService;
 import com.acc.gazua.global.dto.ApiResponse;
+import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -39,9 +41,11 @@ public class ReservationController {
 
     //예약 내역(리스트) 가져오기 (이용 전, 이용 후, 취소 환불)
     @GetMapping
-    public void getReservationList(@AuthenticationPrincipal CustomUserDetails user,
-                                        @RequestParam ReservationStatus status){
-
+    public ResponseEntity<ApiResponse<CursorPage<ReservationGetResponse>>> getReservationList(@AuthenticationPrincipal CustomUserDetails user,
+                                                                                              @RequestParam ReservationStatus status,
+                                                                                              @RequestParam(required = false) String cursor,
+                                                                                              @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(ApiResponse.success(reservationService.getReservationList(user, status, cursor, size), "예약 내역 조회 성공"));
     }
 
 

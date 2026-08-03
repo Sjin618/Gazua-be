@@ -1,4 +1,4 @@
-package com.acc.gazua.domain.accommodation.entity;
+package com.acc.gazua.global.entity;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;

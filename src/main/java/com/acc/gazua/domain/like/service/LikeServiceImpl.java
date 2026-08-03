@@ -11,7 +11,9 @@ import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
+import com.acc.gazua.global.dto.CustomCursor;
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.page.JsonCursorUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +31,8 @@ public class LikeServiceImpl implements LikeService{
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final AccommodationRepository accommodationRepository;
+
+    private final JsonCursorUtils jsonCursorUtils;
 
     //좋아요 생성
     @Override
@@ -57,23 +61,25 @@ public class LikeServiceImpl implements LikeService{
         likeRepository.directDelete(accId,userId);
     }
 
-    public CursorPage<LikeAccommodationDto> getLikeAccommodation(CustomUserDetails user, String cursorValue, int size){
+    public CursorPage<LikeAccommodationDto> getLikeAccommodation(CustomUserDetails user, String cursor, int size){
         Long userId = user.getUserId();
-        Long cursor = (cursorValue != null && !cursorValue.isBlank()) ?
-                Long.parseLong(cursorValue) :
-                Long.MAX_VALUE;
+        CustomCursor customCursor = jsonCursorUtils.deserialize(cursor);
+        Long cursorId = customCursor != null ? customCursor.cursorId() : Long.MAX_VALUE;
 
         PageRequest pageRequest = PageRequest.of(0, size);
 
-        Slice<LikeAccommodationDto> likeList = likeRepository.getLikeList(userId, cursor, pageRequest);
+        Slice<LikeAccommodationDto> likeList = likeRepository.getLikeList(userId, cursorId, pageRequest);
 
         if(likeList.isEmpty()){
             return new CursorPage<>(null,null,false);
         }
 
-        List<LikeAccommodationDto> list = likeList.stream().toList();
+        List<LikeAccommodationDto> list = likeList.getContent();
 
-        return new CursorPage<>(list, String.valueOf(list.get(size - 1).getId()), likeList.hasNext());
+        LikeAccommodationDto lastItem = list.get(list.size() - 1);
+        String encodedCursor = jsonCursorUtils.serialize(new CustomCursor(null, lastItem.getId()));
+
+        return new CursorPage<>(list, encodedCursor, likeList.hasNext());
     }
 
 }

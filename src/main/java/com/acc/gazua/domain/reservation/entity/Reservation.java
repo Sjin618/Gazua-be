@@ -1,9 +1,8 @@
 package com.acc.gazua.domain.reservation.entity;
 
-import com.acc.gazua.domain.accommodation.entity.Accommodation;
-import com.acc.gazua.domain.accommodation.entity.CheckDate;
 import com.acc.gazua.domain.room.entity.Room;
 import com.acc.gazua.domain.user.entity.User;
+import com.acc.gazua.global.entity.CheckDateTIme;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,7 +28,7 @@ public class Reservation {
     private ReservationStatus status;
 
     @Embedded
-    private CheckDate checkDate;
+    private CheckDateTIme checkDateTIme;
 
 
 

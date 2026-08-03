@@ -4,6 +4,7 @@ import com.acc.gazua.domain.Payment.entity.Payment;
 import com.acc.gazua.domain.Payment.entity.PaymentStatus;
 import com.acc.gazua.domain.Payment.repository.PaymentRepository;
 import com.acc.gazua.domain.accommodation.entity.CheckDate;
+import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;
 import com.acc.gazua.domain.reservation.entity.Reservation;
@@ -17,13 +18,20 @@ import com.acc.gazua.domain.roominventory.repository.RoomInventoryRepository;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
+import com.acc.gazua.global.dto.CursorPage;
+import com.acc.gazua.global.dto.CustomCursor;
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.entity.CheckDateTIme;
+import com.acc.gazua.global.page.JsonCursorUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +45,8 @@ public class ReservationService {
     private final RoomInventoryRepository roomInventoryRepository;
     private final RoomRepository roomRepository;
     private final PaymentRepository paymentRepository;
+
+    private final JsonCursorUtils jsonCursorUtils;
 
     public ReservationInitResponse getAndCreateReservation(ReservationInitRequest request,
                                                            Long userId){
@@ -70,12 +80,17 @@ public class ReservationService {
         int price = calculatePriceAndDecreaseStock(inventories);
 
         //가예약 생성 후 저장
-        Room referenceRoom = roomRepository.getReferenceById(roomId);
+        Room referenceRoom = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalStateException("존재하지 않는 방입니다."));
+
+        LocalDateTime checkInDateTime = LocalDateTime.of(checkIn, referenceRoom.getCheckTime().getCheckIn());
+        LocalDateTime checkOutDateTime = LocalDateTime.of(checkOut, referenceRoom.getCheckTime().getCheckOut());
+
         Reservation reservation = Reservation.builder()
                 .room(referenceRoom)
                 .user(user)
                 .status(ReservationStatus.PENDING)
-                .checkDate(request.checkDate())
+                .checkDateTIme(new CheckDateTIme(checkInDateTime, checkOutDateTime))
                 .build();
 
         reservationRepository.save(reservation);
@@ -131,17 +146,36 @@ public class ReservationService {
         reservation.cancelReservation();
 
         //결제 하려고 차감했었던 RoomInventory 재고 1씩 증가
-        CheckDate checkDate = reservation.getCheckDate();
+        CheckDateTIme checkDate = reservation.getCheckDateTIme();
         Room room = reservation.getRoom();
 
         List<RoomInventory> inventories = roomInventoryRepository.findInventoriesForUpdate(room.getId(),
-                checkDate.getCheckIn(),
-                checkDate.getCheckOut());
+                checkDate.getCheckInDateTime().toLocalDate(),
+                checkDate.getCheckOutDateTime().toLocalDate());
         inventories.forEach(inventory -> inventory.increaseStock(1));
     }
 
-    public void getReservationList(CustomUserDetails user,
-                                   ReservationStatus status) {
+    public CursorPage<ReservationGetResponse> getReservationList(CustomUserDetails user,
+                                                                 ReservationStatus status,
+                                                                 String cursor,
+                                                                 int size) {
+        CustomCursor customCursor = jsonCursorUtils.deserialize(cursor);
+        Long cursorId = customCursor != null ? customCursor.cursorId() : Long.MAX_VALUE;
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+
+        Slice<ReservationGetResponse> reservationList = reservationRepository.findByReservationStatus(status, cursorId, user.getUserId(), pageRequest);
+
+        if(reservationList.isEmpty()){
+            return new CursorPage<>(null,null,false);
+        }
+
+        List<ReservationGetResponse> list = reservationList.getContent();
+
+        ReservationGetResponse lastItem = list.get(list.size() - 1);
+        String encodedCursor = jsonCursorUtils.serialize(new CustomCursor(null, lastItem.id()));
+
+        return new CursorPage<>(list, encodedCursor, reservationList.hasNext());
 
     }
 
