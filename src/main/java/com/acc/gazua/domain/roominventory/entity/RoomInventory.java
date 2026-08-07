@@ -26,11 +26,13 @@ public class RoomInventory {
 
     private Integer price;
 
-    private Integer stock;
+    private Integer totalCount;
 
-    public void decreaseStock(int days){
-        this.stock -= days;
+    private Integer availableCount;
+
+    public void decreaseAvailableCount(int days){
+        this.availableCount -= days;
     }
 
-    public void increaseStock(int days){this.stock += days;}
+    public void increaseAvailableCount(int days){this.availableCount += days;}
 }

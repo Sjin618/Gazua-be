@@ -68,7 +68,7 @@ public class ReservationService {
 
         //모든 날의 재고가 1 이상인지 확인
         for (RoomInventory inventory : inventories) {
-            if(inventory.getStock() < 1){
+            if(inventory.getAvailableCount() < 1){
                 //재고 없음 에러 던지기
                 throw new IllegalStateException("재고가 부족합니다.");
             }
@@ -151,7 +151,7 @@ public class ReservationService {
         List<RoomInventory> inventories = roomInventoryRepository.findInventoriesForUpdate(room.getId(),
                 checkDate.getCheckInDateTime().toLocalDate(),
                 checkDate.getCheckOutDateTime().toLocalDate());
-        inventories.forEach(inventory -> inventory.increaseStock(1));
+        inventories.forEach(inventory -> inventory.increaseAvailableCount(1));
     }
 
     public CursorPage<ReservationGetResponse> getReservationList(CustomUserDetails user,
@@ -182,7 +182,7 @@ public class ReservationService {
     private int calculatePriceAndDecreaseStock(List<RoomInventory> inventories){
         int price = 0;
         for (RoomInventory inventory : inventories) {
-            inventory.decreaseStock(1);
+            inventory.decreaseAvailableCount(1);
             price += inventory.getPrice();
         }
         return price;
