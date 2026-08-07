@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @Embeddable
-public class CheckDateTIme {
+public class CheckDateTime {
     private LocalDateTime checkInDateTime;
     private LocalDateTime checkOutDateTime;
 }

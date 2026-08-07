@@ -11,7 +11,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 		"JWT_SECRET=this-is-dummy-secret-key-for-test-12345",
 		"JWT_EXPIRATION_ACCESS=3600000",
 		"JWT_EXPIRATION_REFRESH=604800000",
-		"SERVICE_KEY=1234"
+		"SERVICE_KEY=1234",
+		"PORTONE_API_SECRET=1234"
 })
 class GazuaApplicationTests {
 

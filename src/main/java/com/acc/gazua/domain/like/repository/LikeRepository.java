@@ -23,5 +23,5 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
             "WHERE l.user.id = :userId " +
             "And l.id < :cursorId " +
             "ORDER BY l.id DESC")
-    Slice<LikeAccommodationDto> getLikeList(Long userId, Long cursorId,Pageable page);
+    Slice<LikeAccommodationDto> getLikeList(Long userId, Long cursorId, Pageable page);
 }

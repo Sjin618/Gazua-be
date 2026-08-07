@@ -1,14 +1,12 @@
 package com.acc.gazua.domain.like.service;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
-import com.acc.gazua.domain.accommodation.exception.AccommodationException;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.like.dto.LikeAccommodationDto;
 import com.acc.gazua.domain.like.entity.Like;
 import com.acc.gazua.domain.like.exception.LikeException;
 import com.acc.gazua.domain.like.repository.LikeRepository;
 import com.acc.gazua.domain.user.entity.User;
-import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.CustomCursor;

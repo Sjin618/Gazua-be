@@ -3,7 +3,6 @@ package com.acc.gazua.domain.reservation.service;
 import com.acc.gazua.domain.Payment.entity.Payment;
 import com.acc.gazua.domain.Payment.entity.PaymentStatus;
 import com.acc.gazua.domain.Payment.repository.PaymentRepository;
-import com.acc.gazua.domain.accommodation.entity.CheckDate;
 import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;
@@ -21,7 +20,7 @@ import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.CustomCursor;
 import com.acc.gazua.global.dto.ErrorCode;
-import com.acc.gazua.global.entity.CheckDateTIme;
+import com.acc.gazua.global.entity.CheckDateTime;
 import com.acc.gazua.global.page.JsonCursorUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +49,7 @@ public class ReservationService {
 
     public ReservationInitResponse getAndCreateReservation(ReservationInitRequest request,
                                                            Long userId){
-        Long roomId = request.roomId();;
+        Long roomId = request.roomId();
         //유저 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
@@ -90,7 +89,7 @@ public class ReservationService {
                 .room(referenceRoom)
                 .user(user)
                 .status(ReservationStatus.PENDING)
-                .checkDateTIme(new CheckDateTIme(checkInDateTime, checkOutDateTime))
+                .checkDateTime(new CheckDateTime(checkInDateTime, checkOutDateTime))
                 .build();
 
         reservationRepository.save(reservation);
@@ -146,7 +145,7 @@ public class ReservationService {
         reservation.cancelReservation();
 
         //결제 하려고 차감했었던 RoomInventory 재고 1씩 증가
-        CheckDateTIme checkDate = reservation.getCheckDateTIme();
+        CheckDateTime checkDate = reservation.getCheckDateTime();
         Room room = reservation.getRoom();
 
         List<RoomInventory> inventories = roomInventoryRepository.findInventoriesForUpdate(room.getId(),
@@ -164,7 +163,8 @@ public class ReservationService {
 
         PageRequest pageRequest = PageRequest.of(0, size);
 
-        Slice<ReservationGetResponse> reservationList = reservationRepository.findByReservationStatus(status, cursorId, user.getUserId(), pageRequest);
+        Slice<ReservationGetResponse> reservationList = null;
+                //reservationRepository.findByReservationStatus(status, cursorId, user.getUserId(), pageRequest);
 
         if(reservationList.isEmpty()){
             return new CursorPage<>(null,null,false);

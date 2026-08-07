@@ -31,7 +31,7 @@ public interface RoomInventoryRepository extends JpaRepository<RoomInventory, Lo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r " +
             "FROM RoomInventory r " +
-            "WHERE r.room.id = :roomId" +
+            "WHERE r.room.id = :roomId " +
             "AND r.date >= :checkIn " +
             "AND r.date < :checkOut")
     List<RoomInventory> findInventoriesForUpdate(@Param("roomId") Long roomId,

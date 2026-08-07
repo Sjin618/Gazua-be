@@ -1,7 +1,6 @@
 package com.acc.gazua.domain.reservation.dto;
 
 
-import com.acc.gazua.global.entity.CheckDateTIme;
 
 import java.time.LocalDateTime;
 

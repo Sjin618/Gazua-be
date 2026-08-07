@@ -49,7 +49,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/re-issue",
-                                "/api/user/signup",
+                                "/api/users/signup",
+                                "/api/accommodation/**",
                                 "/h2-console/**"
                         ).permitAll()
                         //정적 자원 허용

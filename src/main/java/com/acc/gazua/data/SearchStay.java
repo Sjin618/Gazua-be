@@ -10,7 +10,7 @@ import java.net.URI;
 
 @Component
 public class SearchStay {
-    private final String LINK = "http://apis.data.go.kr/B551011/KorService2/detailCommon2";
+    private final String LINK = "https://apis.data.go.kr/B551011/KorService2/detailCommon2";
 
     private final String MOBILE_OS = "ETC";
     private final String MOBILE_APP = "Gazua";

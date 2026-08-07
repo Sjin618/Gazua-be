@@ -37,6 +37,7 @@ public class AccommodationRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        System.out.println("데이터 요청 시작");
         List<TourAccListResponseDto.Item> items = searchStayList.searchAccommodation(1);
         for (TourAccListResponseDto.Item acc : items) {
             String description = searchStay.searchStayDescription(acc.getContentid());
