@@ -2,6 +2,10 @@ package com.acc.gazua.data;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.entity.AccommodationType;
+import com.acc.gazua.domain.region.entity.AreaCode;
+import com.acc.gazua.domain.region.entity.Region;
+import com.acc.gazua.domain.region.repository.RegionRepository;
+import com.acc.gazua.domain.roominventory.service.RoomInventoryService;
 import com.acc.gazua.global.entity.CheckTime;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.room.entity.Room;
@@ -34,13 +38,15 @@ public class AccommodationRunner implements CommandLineRunner {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final RoomImageRepository roomImageRepository;
+    private final RoomInventoryService roomInventoryService;
+    private final RegionRepository regionRepository;
 
     @Override
     public void run(String... args) throws Exception {
         System.out.println("데이터 요청 시작");
         List<TourAccListResponseDto.Item> items = searchStayList.searchAccommodation(1);
         for (TourAccListResponseDto.Item acc : items) {
-            String description = searchStay.searchStayDescription(acc.getContentid());
+            TourAccResponseDto.Item description = searchStay.searchStayDescription(acc.getContentid());
             List<TourRoomResponseDto.Item> rooms = searchRoom.searchRoom(acc.getContenttypeid(), acc.getContentid());
             if(rooms == null) continue;
             if(rooms.get(0).getRoomtitle() == null || rooms.get(0).getRoomtitle().isBlank()) continue;
@@ -51,7 +57,7 @@ public class AccommodationRunner implements CommandLineRunner {
 
     }
 
-    public Accommodation createAndSaveAccommodation(TourAccListResponseDto.Item acc, List<TourRoomResponseDto.Item> rooms,String description){
+    public Accommodation createAndSaveAccommodation(TourAccListResponseDto.Item acc, List<TourRoomResponseDto.Item> rooms,TourAccResponseDto.Item description){
         OptionalInt maxCapacity = rooms.stream()
                 .map(TourRoomResponseDto.Item::getRoommaxcount)
                 .filter(count -> count != null && !count.isBlank())
@@ -71,12 +77,16 @@ public class AccommodationRunner implements CommandLineRunner {
                 .nickname(userRequest.nickname())
                 .build();
 
+        Region region = regionRepository.findById(new AreaCode(Integer.parseInt(description.getLDongRegnCd()), Integer.parseInt(description.getLDongSignguCd())))
+                .orElseGet(() -> new Region(new AreaCode(11,110),"서울특별시","종로구"));
+
         Accommodation accommodation = Accommodation.builder()
                 .host(host)
                 .name(acc.getTitle())
                 .type(divideAccommodationType(acc.getCat3(), acc.getTitle()))
                 .address(acc.getAddr1())
-                .description(description)
+                .description(description.getOverview())
+                .region(region)
                 .thumbnailUrl(acc.getFirstimage())
                 .maxCapacity(maxCapacity.orElse(5))
                 .build();
@@ -129,7 +139,19 @@ public class AccommodationRunner implements CommandLineRunner {
 
             roomRepository.save(saveRoom);
             roomImageRepository.saveAll(images);
+
+
+            String weekdayMinFee = room.getRoomoffseasonminfee1();
+            String weekendMinFee = room.getRoomoffseasonminfee2();
+            int weekdayPrice = weekdayMinFee != null && !weekdayMinFee.isBlank() ? Integer.parseInt(weekdayMinFee) : ThreadLocalRandom.current().nextInt(50000, 1000000);
+            int weekendPrice = weekendMinFee != null && !weekendMinFee.isBlank() ? Integer.parseInt(weekendMinFee) : weekdayPrice + 50000;
+
+            createRoomInventories(saveRoom,180,weekdayPrice,weekendPrice);
         }
+    }
+
+    private void createRoomInventories(Room room, int days, int weekdayPrice, int weekendPrice) {
+        roomInventoryService.createInitialInventories(room,days,weekdayPrice,weekendPrice);
     }
 
 //

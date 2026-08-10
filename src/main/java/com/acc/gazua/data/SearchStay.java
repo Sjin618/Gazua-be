@@ -23,7 +23,7 @@ public class SearchStay {
         this.objectMapper = objectMapper;
     }
 
-    public String searchStayDescription(String contentId){
+    public TourAccResponseDto.Item searchStayDescription(String contentId){
         URI uri = UriComponentsBuilder.fromUriString(LINK)
                 .queryParam("MobileOS", MOBILE_OS)
                 .queryParam("MobileApp", MOBILE_APP)
@@ -35,6 +35,6 @@ public class SearchStay {
         RestTemplate restTemplate = new RestTemplate();
         String data = restTemplate.getForObject(uri, String.class);
         TourAccResponseDto dto = objectMapper.readValue(data, TourAccResponseDto.class);
-        return dto.getResponse().getBody().getItems().getItem().get(0).getOverview();
+        return dto.getResponse().getBody().getItems().getItem().get(0);
     }
 }

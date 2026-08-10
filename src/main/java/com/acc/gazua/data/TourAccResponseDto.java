@@ -38,5 +38,7 @@ public class TourAccResponseDto {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Item{
         private String overview;
+        private String lDongRegnCd;
+        private String lDongSignguCd;
     }
 }

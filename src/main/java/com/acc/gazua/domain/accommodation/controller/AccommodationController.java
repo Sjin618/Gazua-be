@@ -24,18 +24,23 @@ public class AccommodationController {
     @GetMapping
     public ResponseEntity<ApiResponse<CursorPage<AccommodationSearchDto>>> getAccommodationList(@RequestParam Integer region,
                                                                                                 @RequestParam Integer personal,
-                                                                                                @RequestParam CheckDate checkDate,
+                                                                                                @ModelAttribute CheckDate checkDate,
                                                                                                 @RequestParam(required = false) String sortType,
                                                                                                 @RequestParam(required = false) String cursor,
                                                                                                 @RequestParam(defaultValue = "10") int size) {
-
-        CursorPage<AccommodationSearchDto> accommodationPage = accommodationService.searchAccommodation(region,
-                personal,
-                checkDate,
-                sortType,
-                cursor,
-                size);
-        return ResponseEntity.ok(ApiResponse.success(accommodationPage, "숙소 조회 성공"));
+        try {
+            System.out.println(checkDate);
+            CursorPage<AccommodationSearchDto> accommodationPage = accommodationService.searchAccommodation(region,
+                    personal,
+                    checkDate,
+                    sortType,
+                    cursor,
+                    size);
+            return ResponseEntity.ok(ApiResponse.success(accommodationPage, "숙소 조회 성공"));
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return null;
     }
 
     //숙소 등록

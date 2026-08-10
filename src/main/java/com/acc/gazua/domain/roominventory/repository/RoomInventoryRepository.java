@@ -20,9 +20,9 @@ public interface RoomInventoryRepository extends JpaRepository<RoomInventory, Lo
             "JOIN ri.room r " +
             "WHERE r.accommodation.id IN :accIds " +
             "AND ri.date >= :checkIn AND ri.date < :checkOut " +
-            "AND ri.stock > 0 " +
+            "AND ri.availableCount > 0 " +
             "GROUP BY r.accommodation.id, r.id " +
-            "HAVING COUNT(ri.id) > :stayDays")
+            "HAVING COUNT(ri.id) >= :stayDays")
     List<AvailableRoomDto> findAvailableRoomsWithTotalPrice(@Param("accIds") List<Long> accIds,
                                                             @Param("checkIn") LocalDate checkIn,
                                                             @Param("checkOut") LocalDate checkOut,

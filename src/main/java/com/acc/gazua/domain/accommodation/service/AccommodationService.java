@@ -116,7 +116,7 @@ public class AccommodationService {
         String encodedCursor = "";
         if ("REVIEW".equals(sortType)) {
             encodedCursor = jsonCursorUtils.serialize(new CustomCursor(lastItem.getReviewCount().toString(), lastItem.getId()));
-        } else if ("AVERAGESTA".equals(sortType)) {
+        } else if ("AVERAGESTAR".equals(sortType)) {
             encodedCursor = jsonCursorUtils.serialize(new CustomCursor(lastItem.getAverageStar().toString(), lastItem.getId()));
         }
 

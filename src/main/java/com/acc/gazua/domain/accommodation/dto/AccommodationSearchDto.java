@@ -14,7 +14,15 @@ public class AccommodationSearchDto {
     private String name;
     private String thumbnailUrl;
     private BigDecimal averageStar;
-    private Long reviewCount;
+    private Integer reviewCount;
     private Integer minPrice;
     private boolean available;
+
+    public AccommodationSearchDto(Long id, String name, String thumbnailUrl, BigDecimal averageStar, Integer reviewCount) {
+        this.id = id;
+        this.name = name;
+        this.thumbnailUrl = thumbnailUrl;
+        this.averageStar = averageStar;
+        this.reviewCount = reviewCount;
+    }
 }
