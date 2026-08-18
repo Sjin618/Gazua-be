@@ -1,4 +1,4 @@
-package com.acc.gazua.domain.Payment.dto;
+package com.acc.gazua.domain.payment.dto;
 
 public record PaymentVerifyRequest(
         String impUid,

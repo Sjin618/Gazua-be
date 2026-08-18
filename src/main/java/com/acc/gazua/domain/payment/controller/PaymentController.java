@@ -1,9 +1,9 @@
-package com.acc.gazua.domain.Payment.controller;
+package com.acc.gazua.domain.payment.controller;
 
-import com.acc.gazua.domain.Payment.dto.PaymentPrepareRequest;
-import com.acc.gazua.domain.Payment.dto.PaymentPrepareResponse;
-import com.acc.gazua.domain.Payment.dto.PaymentVerifyRequest;
-import com.acc.gazua.domain.Payment.service.PaymentService;
+import com.acc.gazua.domain.payment.dto.PaymentPrepareRequest;
+import com.acc.gazua.domain.payment.dto.PaymentPrepareResponse;
+import com.acc.gazua.domain.payment.dto.PaymentVerifyRequest;
+import com.acc.gazua.domain.payment.service.PaymentService;
 import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

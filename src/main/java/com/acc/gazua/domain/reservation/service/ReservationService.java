@@ -1,8 +1,8 @@
 package com.acc.gazua.domain.reservation.service;
 
-import com.acc.gazua.domain.Payment.entity.Payment;
-import com.acc.gazua.domain.Payment.entity.PaymentStatus;
-import com.acc.gazua.domain.Payment.repository.PaymentRepository;
+import com.acc.gazua.domain.payment.entity.Payment;
+import com.acc.gazua.domain.payment.entity.PaymentStatus;
+import com.acc.gazua.domain.payment.repository.PaymentRepository;
 import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;

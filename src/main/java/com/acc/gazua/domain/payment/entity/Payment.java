@@ -1,7 +1,6 @@
-package com.acc.gazua.domain.Payment.entity;
+package com.acc.gazua.domain.payment.entity;
 
 import com.acc.gazua.domain.reservation.entity.Reservation;
-import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.global.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;

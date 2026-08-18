@@ -1,8 +1,8 @@
-package com.acc.gazua.domain.Payment.service;
+package com.acc.gazua.domain.payment.service;
 
-import com.acc.gazua.domain.Payment.dto.PaymentPrepareRequest;
-import com.acc.gazua.domain.Payment.dto.PaymentPrepareResponse;
-import com.acc.gazua.domain.Payment.dto.PaymentVerifyRequest;
+import com.acc.gazua.domain.payment.dto.PaymentPrepareRequest;
+import com.acc.gazua.domain.payment.dto.PaymentPrepareResponse;
+import com.acc.gazua.domain.payment.dto.PaymentVerifyRequest;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 
 public interface PaymentService {

@@ -1,11 +1,11 @@
-package com.acc.gazua.domain.Payment.service;
+package com.acc.gazua.domain.payment.service;
 
-import com.acc.gazua.domain.Payment.dto.PaymentPrepareRequest;
-import com.acc.gazua.domain.Payment.dto.PaymentPrepareResponse;
-import com.acc.gazua.domain.Payment.dto.PaymentVerifyRequest;
-import com.acc.gazua.domain.Payment.entity.Payment;
-import com.acc.gazua.domain.Payment.entity.PaymentStatus;
-import com.acc.gazua.domain.Payment.repository.PaymentRepository;
+import com.acc.gazua.domain.payment.dto.PaymentPrepareRequest;
+import com.acc.gazua.domain.payment.dto.PaymentPrepareResponse;
+import com.acc.gazua.domain.payment.dto.PaymentVerifyRequest;
+import com.acc.gazua.domain.payment.entity.Payment;
+import com.acc.gazua.domain.payment.entity.PaymentStatus;
+import com.acc.gazua.domain.payment.repository.PaymentRepository;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.reservation.entity.Reservation;
 import com.acc.gazua.domain.reservation.exception.ReservationException;
