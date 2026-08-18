@@ -19,10 +19,10 @@ public class Payment extends BaseTimeEntity {
     @ManyToOne
     private Reservation reservation;
 
-    private String paymentId; //PortOne 에서 생성된 고유 ID
-
     @Column(nullable = false, unique = true)
-    private String merchantId; //서버에서 만든 고유 ID
+    private String paymentId; //서버에서 만드는 고유 ID
+
+    // private String merchantId; //PortOne 고객사 ID
 
     private Integer price; //결제 금액
 

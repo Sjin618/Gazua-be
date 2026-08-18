@@ -71,6 +71,9 @@ dependencies {
 	// 포트원 REST API 연동 모듈
 	implementation 'com.github.iamport:iamport-rest-client-java:0.2.23'
 
+	// 포트원 웹훅 관련 모듈
+	implementation 'io.portone:server-sdk:0.24.0'
+
 }
 
 // (선택사항) Q클래스가 생성될 경로 지정 및 build 시 clean 설정

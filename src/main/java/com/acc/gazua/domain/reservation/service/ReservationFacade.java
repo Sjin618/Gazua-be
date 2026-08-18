@@ -20,11 +20,11 @@ public class ReservationFacade {
         PortOneClient.PortOnePaymentInfo paymentInfo = portOneClient.getPaymentAmount(request.getPaymentId());
 
         //프론트에서 보낸 것과 PortOne에서 준 정보가 일치하는지 확인
-        if(!paymentInfo.merchantId().equals(request.getMerchantId())){
+        if(!paymentInfo.paymentId().equals(request.getPaymentId())){
             throw new IllegalArgumentException("결제 정보가 일치하지 않습니다.");
         }
         //DB와 실제 결제 금액이 맞는지 확인 후 boolean 반환
-        boolean isPaidValid = reservationService.verifyAndConfirmReservation(request.getMerchantId(), request.getReservationId(), paymentInfo.paidTotal());
+        boolean isPaidValid = reservationService.verifyAndConfirmReservation(paymentInfo.paymentId(), request.getReservationId(), paymentInfo.paidTotal());
 
         //결제 위변조 의심 취소 환불 진행
         if(!isPaidValid){
@@ -32,7 +32,7 @@ public class ReservationFacade {
             //결제 환불 요청
             portOneClient.refundPayment(request.getPaymentId(), null, "결제 금액이 달라 환불 처리되었습니다.(위변조 의심)");
             //예약과 결제 환불로 상태 변화
-            reservationService.failReservationAndPayment(paymentInfo.merchantId(), request.getReservationId());
+            reservationService.failReservationAndPayment(paymentInfo.paymentId(), request.getReservationId());
             throw new IllegalStateException("결제 금액이 일치하지 않아 환불 처리되었습니다.");
         }
 

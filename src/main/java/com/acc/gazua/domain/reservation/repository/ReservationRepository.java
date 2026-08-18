@@ -21,7 +21,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r JOIN FETCH r.room WHERE r.id = :id")
     Optional<Reservation> findByIdWithRoom(@Param("id") Long reservationId);
 
-    /*@Query("SELECT r.id, r.thumbnailUrl as thumbnailUrl, " +
+    @Query("SELECT r.id, a.thumbnailUrl as thumbnailUrl, " +
             "a.name as accommodationName, " +
             "rm.name as roomName, " +
             "r.checkDateTime.checkInDateTime as checkInDateTime, " +
@@ -37,5 +37,4 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                                           @Param("cursorId") Long cursorId,
                                                           @Param("userId") Long userId,
                                                           Pageable pageable);
-                                                          */
 }

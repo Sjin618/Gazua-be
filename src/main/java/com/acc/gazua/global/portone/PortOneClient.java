@@ -52,7 +52,7 @@ public class PortOneClient {
                 throw new IllegalStateException("결제가 완료되지 않은 상태입니다: " + payment.status());
             }
 
-            return new PortOnePaymentInfo(payment.amount().total(), payment.merchantId());
+            return new PortOnePaymentInfo(payment.amount().total(), payment.id());
         } catch (HttpClientErrorException.NotFound e) {
             throw new IllegalStateException("포트원에서 결제 정보를 찾을 수 없습니다.", e);
         } catch (HttpClientErrorException e) {
@@ -75,8 +75,9 @@ public class PortOneClient {
     }
 
 
-    public record PortOnePaymentInfo(long paidTotal,String merchantId){}
-    public record PortOnePaymentResponse(String status, String merchantId, String id,PaymentAmount amount){}
+    //id가 paymentId
+    public record PortOnePaymentInfo(long paidTotal,String paymentId){}
+    public record PortOnePaymentResponse(String status, String id,PaymentAmount amount){}
     public record PaymentAmount(long total) {}
 
     public record RefundPaymentRequest(Long amount, String reason){}

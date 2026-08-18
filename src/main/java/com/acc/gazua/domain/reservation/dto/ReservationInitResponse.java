@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ReservationInitResponse {
-    private String merchantId;
+    private String paymentId;
     private Long reservationId;
     private Integer price;
     private String buyerName;

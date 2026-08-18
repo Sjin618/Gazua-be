@@ -97,18 +97,18 @@ public class ReservationService {
         reservationRepository.save(reservation);
 
         //결제 Entity 생성 후 저장
-        String merchantId = makeMerchantId(roomId);
+        String paymentId = makePaymentId(roomId);
 
         Payment payment = Payment.builder()
                 .status(PaymentStatus.READY)
                 .price(price)
                 .reservation(reservation)
-                .merchantId(merchantId)
+                .paymentId(paymentId)
                 .build();
 
         paymentRepository.save(payment);
 
-        return new ReservationInitResponse(merchantId,
+        return new ReservationInitResponse(paymentId,
                 reservation.getId(),
                 price,
                 user.getName(),
@@ -118,7 +118,7 @@ public class ReservationService {
     }
 
     //실제 결제 금액과 DB 금액 대조 로직(예약 확정 전 마지막 단계)
-    public boolean verifyAndConfirmReservation(String merchantId, Long reservationId, long paidTotal) {
+    public boolean verifyAndConfirmReservation(String paymentId, Long reservationId, long paidTotal) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND));
 
@@ -126,7 +126,7 @@ public class ReservationService {
             return true; //이미 결제된 건은 true 반환 - 결제 중복 요청 처리
         }
 
-        Payment payment = paymentRepository.findByMerchantIdAndReservationId(merchantId, reservationId)
+        Payment payment = paymentRepository.findByPaymentIdAndReservationId(paymentId, reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
 
         //결제 정보가 맞는지 검증
@@ -143,8 +143,8 @@ public class ReservationService {
     }
 
     //예약 실패 및 환불 로직
-    public void failReservationAndPayment(String merchantId, Long reservationId) {
-        Payment payment = paymentRepository.findByMerchantIdAndReservationId(merchantId, reservationId)
+    public void failReservationAndPayment(String paymentId, Long reservationId) {
+        Payment payment = paymentRepository.findByPaymentIdAndReservationId(paymentId, reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
 
         Reservation reservation = reservationRepository.findByIdWithRoom(reservationId)
@@ -199,7 +199,7 @@ public class ReservationService {
         return price;
     }
 
-    private String makeMerchantId(Long roomId){
+    private String makePaymentId(Long roomId){
         return "reserve_" + UUID.randomUUID() + "_" + roomId;
     }
 }
