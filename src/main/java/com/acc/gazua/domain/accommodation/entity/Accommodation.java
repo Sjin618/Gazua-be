@@ -28,10 +28,7 @@ public class Accommodation {
     private String address; // 숙소 주소
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumns({
-            @JoinColumn(name = "area_code",referencedColumnName = "areaCode"),
-            @JoinColumn(name = "sigungu_code",referencedColumnName = "sigunguCode")
-    })
+    @JoinColumn(name = "region_id", nullable = false)
     private Region region; //지역 코드
 
     @Enumerated(EnumType.STRING) private AccommodationType type;

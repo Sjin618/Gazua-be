@@ -34,7 +34,7 @@ public class PaymentController {
     @PostMapping("/verify")
     public ResponseEntity<Void> verifyPayment(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                                               @RequestBody PaymentVerifyRequest request){
-
+        paymentService.verifyPayment(request);
         return ResponseEntity.ok(null);
     }
 

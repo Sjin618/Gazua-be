@@ -35,7 +35,7 @@ public class AccommodationService {
     private final RoomInventoryRepository roomInventoryRepository;
     private final JsonCursorUtils jsonCursorUtils;
 
-    public CursorPage<AccommodationSearchDto> searchAccommodation(Integer region,
+    public CursorPage<AccommodationSearchDto> searchAccommodation(String region,
                                                                   Integer personal,
                                                                   CheckDate checkDate,
                                                                   String sortType,

@@ -51,4 +51,8 @@ public class Reservation {
         this.status = ReservationStatus.CANCELLED;
     }
 
+    public boolean isConfirmed(){
+        return ReservationStatus.CONFIRM.equals(this.status);
+    }
+
 }

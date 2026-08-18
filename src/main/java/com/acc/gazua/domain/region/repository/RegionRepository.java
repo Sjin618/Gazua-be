@@ -1,13 +1,14 @@
 package com.acc.gazua.domain.region.repository;
 
-import com.acc.gazua.domain.region.entity.AreaCode;
 import com.acc.gazua.domain.region.entity.Region;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
-public interface RegionRepository extends JpaRepository<Region, AreaCode> {
-
-
-
+public interface RegionRepository extends JpaRepository<Region, Long> {
+    @Query("SELECT r FROM Region r WHERE r.regionCode = :regionCode AND r.sigunguCode = :sigunguCode")
+    Optional<Region> findByRegionCodeAndSigunguCode(String regionCode,String sigunguCode);
 }

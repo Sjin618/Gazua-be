@@ -1,8 +1,7 @@
-package com.acc.gazua.data;
+package com.acc.gazua.data.accommodation;
 
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.entity.AccommodationType;
-import com.acc.gazua.domain.region.entity.AreaCode;
 import com.acc.gazua.domain.region.entity.Region;
 import com.acc.gazua.domain.region.repository.RegionRepository;
 import com.acc.gazua.domain.roominventory.service.RoomInventoryService;
@@ -41,8 +40,10 @@ public class AccommodationRunner implements CommandLineRunner {
     private final RoomInventoryService roomInventoryService;
     private final RegionRepository regionRepository;
 
+    private final boolean enabled = false;
     @Override
     public void run(String... args) throws Exception {
+        if(!enabled) return;
         System.out.println("데이터 요청 시작");
         List<TourAccListResponseDto.Item> items = searchStayList.searchAccommodation(1);
         for (TourAccListResponseDto.Item acc : items) {
@@ -77,8 +78,8 @@ public class AccommodationRunner implements CommandLineRunner {
                 .nickname(userRequest.nickname())
                 .build();
 
-        Region region = regionRepository.findById(new AreaCode(Integer.parseInt(description.getLDongRegnCd()), Integer.parseInt(description.getLDongSignguCd())))
-                .orElseGet(() -> new Region(new AreaCode(11,110),"서울특별시","종로구"));
+        Region region = regionRepository.findByRegionCodeAndSigunguCode(description.getLDongRegnCd(), description.getLDongSignguCd())
+                .orElseGet(() -> new Region(1L,"11","000","000","00","서울특별시","종로구"));
 
         Accommodation accommodation = Accommodation.builder()
                 .host(host)

@@ -22,7 +22,7 @@ public class AccommodationController {
     //지역, 인원 수, 기간 필터링 3개는 필수로 들어와야 함
     //평점, 리뷰 수, 가격 정렬 3개 중에 선택해서 들어옴
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorPage<AccommodationSearchDto>>> getAccommodationList(@RequestParam Integer region,
+    public ResponseEntity<ApiResponse<CursorPage<AccommodationSearchDto>>> getAccommodationList(@RequestParam String region,
                                                                                                 @RequestParam Integer personal,
                                                                                                 @ModelAttribute CheckDate checkDate,
                                                                                                 @RequestParam(required = false) String sortType,

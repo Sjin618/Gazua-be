@@ -24,6 +24,7 @@ import com.acc.gazua.global.entity.CheckDateTime;
 import com.acc.gazua.global.page.JsonCursorUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional
 @Service
+@Slf4j
 public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
@@ -116,16 +118,24 @@ public class ReservationService {
     }
 
     //실제 결제 금액과 DB 금액 대조 로직(예약 확정 전 마지막 단계)
-    public boolean verifyAndConfirmReservation(String merchantId, Long reservationId, int paidTotal) {
-        Payment payment = paymentRepository.findByMerchantId(merchantId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
-        //결제 정보가 맞는지 검증
-        if (payment.getPrice() != paidTotal){
-            return false;
-        }
-        //맞으면 예약과 결제의 상태 변화
+    public boolean verifyAndConfirmReservation(String merchantId, Long reservationId, long paidTotal) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND));
+
+        if(reservation.isConfirmed()){
+            return true; //이미 결제된 건은 true 반환 - 결제 중복 요청 처리
+        }
+
+        Payment payment = paymentRepository.findByMerchantIdAndReservationId(merchantId, reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
+
+        //결제 정보가 맞는지 검증
+        if (payment.getPrice() != paidTotal){
+            log.warn("결제 금액 불일치 - reservationId={}, expected={}, actual={}", reservationId, payment.getPrice(), paidTotal);
+            return false;
+        }
+
+        //맞으면 예약과 결제의 상태 변화
         reservation.confirmReservation();
         payment.confirmPayment();
 
@@ -134,7 +144,7 @@ public class ReservationService {
 
     //예약 실패 및 환불 로직
     public void failReservationAndPayment(String merchantId, Long reservationId) {
-        Payment payment = paymentRepository.findByMerchantId(merchantId)
+        Payment payment = paymentRepository.findByMerchantIdAndReservationId(merchantId, reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
 
         Reservation reservation = reservationRepository.findByIdWithRoom(reservationId)
@@ -153,6 +163,7 @@ public class ReservationService {
                 checkDate.getCheckOutDateTime().toLocalDate());
         inventories.forEach(inventory -> inventory.increaseAvailableCount(1));
     }
+
 
     public CursorPage<ReservationGetResponse> getReservationList(CustomUserDetails user,
                                                                  ReservationStatus status,

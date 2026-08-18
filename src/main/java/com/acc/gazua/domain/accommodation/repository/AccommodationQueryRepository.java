@@ -18,7 +18,7 @@ public class AccommodationQueryRepository {
     private final JPAQueryFactory jpaQueryFactory;
     private final QAccommodation accommodation = QAccommodation.accommodation;
 
-    public List<AccommodationSearchDto> searchAccommodationSortByReviewDesc(Integer region,
+    public List<AccommodationSearchDto> searchAccommodationSortByReviewDesc(String region,
                                                     Integer personal,
                                                     Integer cursorReviewCount,
                                                     Long cursorId,
@@ -40,7 +40,7 @@ public class AccommodationQueryRepository {
                 .fetch();
     }
 
-    public List<AccommodationSearchDto> searchAccommodationSortByAverageStarDesc(Integer region,
+    public List<AccommodationSearchDto> searchAccommodationSortByAverageStarDesc(String region,
                                                                                  Integer personal,
                                                                                  BigDecimal cursorStar,
                                                                                  Long cursorId,
@@ -62,8 +62,8 @@ public class AccommodationQueryRepository {
                 .fetch();
     }
 
-    private BooleanExpression eqRegion(Integer region){
-        return region != null ? accommodation.region.areaCode.areaCode.eq(region) : null;
+    private BooleanExpression eqRegion(String region){
+        return region != null ? accommodation.region.regionCode.eq(region) : null;
     }
 
     private BooleanExpression goePersonal(Integer personal){

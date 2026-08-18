@@ -1,4 +1,4 @@
-package com.acc.gazua.data;
+package com.acc.gazua.data.accommodation;
 
 
 import org.springframework.beans.factory.annotation.Value;

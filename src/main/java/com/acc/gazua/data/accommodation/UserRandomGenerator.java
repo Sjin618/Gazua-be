@@ -1,4 +1,4 @@
-package com.acc.gazua.data;
+package com.acc.gazua.data.accommodation;
 
 import com.acc.gazua.domain.user.dto.UserSignUpRequest;
 import com.acc.gazua.domain.user.entity.Gender;

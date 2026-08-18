@@ -1,8 +1,8 @@
 package com.acc.gazua;
 
-import com.acc.gazua.data.SearchRoom;
-import com.acc.gazua.data.SearchStay;
-import com.acc.gazua.data.SearchStayList;
+import com.acc.gazua.data.accommodation.SearchRoom;
+import com.acc.gazua.data.accommodation.SearchStay;
+import com.acc.gazua.data.accommodation.SearchStayList;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
