@@ -7,5 +7,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReservationConfirmRequest {
     private String paymentId;
-    private Long ReservationId;
 }

@@ -1,5 +1,7 @@
 package com.acc.gazua.global.config;
 
+import io.portone.sdk.server.webhook.WebhookVerifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tools.jackson.databind.ObjectMapper;
@@ -17,5 +19,10 @@ public class CommonConfig {
                 .withCoercionConfig(LogicalType.POJO,config->
                         config.setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull))
                 .build();
+    }
+
+    @Bean
+    public WebhookVerifier webhookVerifier(@Value("WEBHOOK_SECRET") String webhookSecret){
+        return new WebhookVerifier(webhookSecret);
     }
 }

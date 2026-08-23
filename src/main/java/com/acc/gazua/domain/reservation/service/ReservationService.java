@@ -3,6 +3,7 @@ package com.acc.gazua.domain.reservation.service;
 import com.acc.gazua.domain.payment.entity.Payment;
 import com.acc.gazua.domain.payment.entity.PaymentStatus;
 import com.acc.gazua.domain.payment.repository.PaymentRepository;
+import com.acc.gazua.domain.payment.service.PaymentSyncResult;
 import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;
@@ -22,6 +23,7 @@ import com.acc.gazua.global.dto.CustomCursor;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.entity.CheckDateTime;
 import com.acc.gazua.global.page.JsonCursorUtils;
+import com.acc.gazua.global.portone.PortOneClient;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,11 +32,15 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+
+import static com.acc.gazua.global.portone.PortOneClient.*;
 
 @RequiredArgsConstructor
 @Transactional
@@ -117,52 +123,63 @@ public class ReservationService {
         );
     }
 
-    //실제 결제 금액과 DB 금액 대조 로직(예약 확정 전 마지막 단계)
-    public boolean verifyAndConfirmReservation(String paymentId, Long reservationId, long paidTotal) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND));
+    //실제 결제 금액과 DB 금액 대조 로직(예약 확정 전 마지막 단계) - 결제 확정
+    public PaymentSyncResult applyPaid(PortOnePaymentSnapshot snapshot) {
+        Payment payment = paymentRepository.findByPaymentIdForUpdate(snapshot.paymentId()).orElse(null);
 
-        if(reservation.isConfirmed()){
-            return true; //이미 결제된 건은 true 반환 - 결제 중복 요청 처리
+        if(payment == null){
+            log.warn("DB에 없는 결제 건 동기화 시도 - paymentId={}", snapshot.paymentId());
+            return PaymentSyncResult.UNKNOWN_PAYMENT;
         }
 
-        Payment payment = paymentRepository.findByPaymentIdAndReservationId(paymentId, reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
-
-        //결제 정보가 맞는지 검증
-        if (payment.getPrice() != paidTotal){
-            log.warn("결제 금액 불일치 - reservationId={}, expected={}, actual={}", reservationId, payment.getPrice(), paidTotal);
-            return false;
+        //이미 결제 확정된 건은 재시도 하지 않음
+        if (payment.getStatus() == PaymentStatus.COMPLETED) {
+            return PaymentSyncResult.ALREADY_DONE;
+        }
+        if (payment.getStatus() == PaymentStatus.REFUND) {
+            // 순서 역전: Cancelled가 먼저 처리된 뒤 Paid가 뒤늦게 도착
+            log.warn("이미 환불된 건에 결제 확정 시도 - 무시 - paymentId={}", snapshot.paymentId());
+            return PaymentSyncResult.ALREADY_DONE;
         }
 
-        //맞으면 예약과 결제의 상태 변화
-        reservation.confirmReservation();
-        payment.confirmPayment();
+        if (payment.getPrice().longValue() != snapshot.paidTotal()) {
+            log.warn("결제 금액 불일치 - paymentId={}, expected={}, actual={}",
+                    snapshot.paymentId(), payment.getPrice(), snapshot.paidTotal());
+            return PaymentSyncResult.AMOUNT_MISMATCH;
+        }
 
-        return true;
+        payment.confirmPayment(toLocalDateTIme(snapshot.paidAt()), snapshot.payMethod(), snapshot.pgProvider());
+        payment.getReservation().confirmReservation();
+
+        log.info("결제 확정 - paymentId={}, reservationId={}",
+                snapshot.paymentId(), payment.getReservation().getId());
+        return PaymentSyncResult.CONFIRMED;
     }
 
-    //예약 실패 및 환불 로직
-    public void failReservationAndPayment(String paymentId, Long reservationId) {
-        Payment payment = paymentRepository.findByPaymentIdAndReservationId(paymentId, reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 건입니다."));
+    //예약 취소 및 환불 로직 — READY(미결제 취소)든 COMPLETED(환불)든 재고는 동일하게 복구
+    public PaymentSyncResult applyCancelled(String paymentId, Instant cancelledAt, String reason) {
+        Payment payment = paymentRepository.findByPaymentIdForUpdate(paymentId).orElse(null);
 
-        Reservation reservation = reservationRepository.findByIdWithRoom(reservationId)
-                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND));
+        if(payment == null){
+            log.warn("DB에 없는 결제 건 취소 시도 - paymentId={}", paymentId);
+            return PaymentSyncResult.UNKNOWN_PAYMENT;
+        }
 
-        //예약과 결제 환불 상태로 변화
-        payment.refundPayment();
+        //이미 환불된 결제 재요청 막기
+        if (payment.getStatus() == PaymentStatus.REFUND) {
+            return PaymentSyncResult.ALREADY_DONE;
+        }
+
+        Reservation reservation = payment.getReservation();
+        payment.refundPayment(toLocalDateTIme(cancelledAt), reason);
         reservation.cancelReservation();
+        increaseRoomInventoryCount(reservation.getCheckDateTime(), reservation.getRoom());
 
-        //결제 하려고 차감했었던 RoomInventory 재고 1씩 증가
-        CheckDateTime checkDate = reservation.getCheckDateTime();
-        Room room = reservation.getRoom();
-
-        List<RoomInventory> inventories = roomInventoryRepository.findInventoriesForUpdate(room.getId(),
-                checkDate.getCheckInDateTime().toLocalDate(),
-                checkDate.getCheckOutDateTime().toLocalDate());
-        inventories.forEach(inventory -> inventory.increaseAvailableCount(1));
+        log.info("예약 취소 및 재고 복구 - paymentId={}, reservationId={}, reason={}",
+                paymentId, reservation.getId(), reason);
+        return PaymentSyncResult.CANCELLED;
     }
+
 
 
     public CursorPage<ReservationGetResponse> getReservationList(CustomUserDetails user,
@@ -201,5 +218,16 @@ public class ReservationService {
 
     private String makePaymentId(Long roomId){
         return "reserve_" + UUID.randomUUID() + "_" + roomId;
+    }
+
+    private void increaseRoomInventoryCount(CheckDateTime checkDateTime,Room room){
+        List<RoomInventory> inventories = roomInventoryRepository.findInventoriesForUpdate(room.getId(),
+                checkDateTime.getCheckInDateTime().toLocalDate(),
+                checkDateTime.getCheckOutDateTime().toLocalDate());
+        inventories.forEach(inventory -> inventory.increaseAvailableCount(1));
+    }
+
+    private LocalDateTime toLocalDateTIme(Instant instant) {
+        return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneId.of("Asia/Seoul"));
     }
 }

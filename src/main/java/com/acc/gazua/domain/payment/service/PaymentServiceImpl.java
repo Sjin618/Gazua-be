@@ -45,7 +45,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         Payment payment = Payment.builder()
                 .price(0)
-                .merchantId(merchantId)
+                .paymentId(merchantId)
                 .reservation(reservation)
                 .status(PaymentStatus.READY)
                 .build();

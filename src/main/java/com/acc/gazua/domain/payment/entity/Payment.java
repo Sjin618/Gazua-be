@@ -5,6 +5,7 @@ import com.acc.gazua.global.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -46,5 +47,18 @@ public class Payment extends BaseTimeEntity {
 
     public void refundPayment(){
         this.status = PaymentStatus.REFUND;
+    }
+
+    public void confirmPayment(LocalDateTime paidAt, String payMethod, String pgProvider) {
+        this.status = PaymentStatus.COMPLETED;
+        this.paidAt = paidAt;
+        this.payMethod = payMethod;
+        this.pgProvider = pgProvider;
+    }
+
+    public void refundPayment(LocalDateTime cancelledAt, String cancelReason) {
+        this.status = PaymentStatus.REFUND;
+        this.cancelledAt = cancelledAt;
+        this.cancelReason = cancelReason;
     }
 }
