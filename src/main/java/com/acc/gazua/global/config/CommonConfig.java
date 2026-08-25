@@ -10,6 +10,9 @@ import tools.jackson.databind.cfg.CoercionInputShape;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.type.LogicalType;
 
+import java.time.Clock;
+import java.time.ZoneId;
+
 @Configuration
 public class CommonConfig {
 
@@ -22,7 +25,12 @@ public class CommonConfig {
     }
 
     @Bean
-    public WebhookVerifier webhookVerifier(@Value("WEBHOOK_SECRET") String webhookSecret){
+    public WebhookVerifier webhookVerifier(@Value("${WEBHOOK_SECRET}") String webhookSecret){
         return new WebhookVerifier(webhookSecret);
+    }
+
+    @Bean
+    public Clock clock(){
+        return Clock.system(ZoneId.of("Asia/Seoul"));
     }
 }

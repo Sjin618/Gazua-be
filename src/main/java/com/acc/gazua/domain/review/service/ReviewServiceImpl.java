@@ -125,7 +125,7 @@ public class ReviewServiceImpl implements ReviewService{
         //리스트가 비어있을 시 리뷰가 더이상 없다는 뜻
         //빈 리스트 반환
         if(list.isEmpty()){
-            return new CursorPage<>(list, null, false);
+            return CursorPage.empty();
         }
 
         boolean hasNext = list.size() > size;

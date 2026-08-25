@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/re-issue",
                                 "/api/users/signup",
-                                "api/payment/webhooks",
+                                "/api/payment/webhooks",
                                 "/api/accommodation/**",
                                 "/h2-console/**"
                         ).permitAll()

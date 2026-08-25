@@ -2,8 +2,14 @@ package com.acc.gazua.domain.reservation.service;
 
 import com.acc.gazua.domain.payment.entity.Payment;
 import com.acc.gazua.domain.payment.entity.PaymentStatus;
+import com.acc.gazua.domain.payment.exception.PaymentException;
 import com.acc.gazua.domain.payment.repository.PaymentRepository;
 import com.acc.gazua.domain.payment.service.PaymentSyncResult;
+import com.acc.gazua.domain.policy.dto.RefundCalculation;
+import com.acc.gazua.domain.policy.entity.RefundPolicySnapshot;
+import com.acc.gazua.domain.policy.service.CancellationPolicyResolver;
+import com.acc.gazua.domain.policy.service.RefundCalculator;
+import com.acc.gazua.domain.reservation.adapter.ReservationCancelAdapter;
 import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;
@@ -32,10 +38,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -52,6 +55,10 @@ public class ReservationService {
     private final RoomInventoryRepository roomInventoryRepository;
     private final RoomRepository roomRepository;
     private final PaymentRepository paymentRepository;
+
+    private final CancellationPolicyResolver policyResolver;
+    private final RefundCalculator refundCalculator;
+    private final Clock clock;
 
     private final JsonCursorUtils jsonCursorUtils;
 
@@ -98,6 +105,7 @@ public class ReservationService {
                 .user(user)
                 .status(ReservationStatus.PENDING)
                 .checkDateTime(new CheckDateTime(checkInDateTime, checkOutDateTime))
+                .refundPolicy(RefundPolicySnapshot.of(policyResolver.resolve(referenceRoom)))
                 .build();
 
         reservationRepository.save(reservation);
@@ -157,7 +165,8 @@ public class ReservationService {
     }
 
     //예약 취소 및 환불 로직 — READY(미결제 취소)든 COMPLETED(환불)든 재고는 동일하게 복구
-    public PaymentSyncResult applyCancelled(String paymentId, Instant cancelledAt, String reason) {
+    public PaymentSyncResult applyCancelled(String paymentId, Instant cancelledAt, String reason,
+                                            long cancelledTotal, boolean fullyCancelled) {
         Payment payment = paymentRepository.findByPaymentIdForUpdate(paymentId).orElse(null);
 
         if(payment == null){
@@ -166,18 +175,60 @@ public class ReservationService {
         }
 
         //이미 환불된 결제 재요청 막기
-        if (payment.getStatus() == PaymentStatus.REFUND) {
+        if(payment.isRefundSettled()){
             return PaymentSyncResult.ALREADY_DONE;
         }
 
+        //요청한 금액과 PG 실제 취소액이 다르면 반드시 인지해야 한다
+        if (payment.getRefundAmount() != null && payment.getRefundAmount() != cancelledTotal) {
+            log.error("환불 금액 불일치 - paymentId={}, expected={}, actual={}",
+                    paymentId, payment.getRefundAmount(), cancelledTotal);
+        }
+
         Reservation reservation = payment.getReservation();
-        payment.refundPayment(toLocalDateTIme(cancelledAt), reason);
+        payment.completeRefund(toLocalDateTIme(cancelledAt), cancelledTotal, reason, fullyCancelled);
         reservation.cancelReservation();
         increaseRoomInventoryCount(reservation.getCheckDateTime(), reservation.getRoom());
 
         log.info("예약 취소 및 재고 복구 - paymentId={}, reservationId={}, reason={}",
                 paymentId, reservation.getId(), reason);
         return PaymentSyncResult.CANCELLED;
+    }
+
+    //환불 0원 - PG 호출 없이 예약만 취소하고 재고를 푼다
+    public void applyForfeited(String paymentId, String reason) {
+        Payment payment = paymentRepository.findByPaymentIdForUpdate(paymentId)
+                .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+
+        if(payment.isRefundSettled()) return;
+
+        Reservation reservation = payment.getReservation();
+        payment.forfeit(LocalDateTime.now(clock), reason);
+        reservation.cancelReservation();
+        increaseRoomInventoryCount(reservation.getCheckDateTime(),
+                reservation.getRoom());
+
+        log.info("환불 없이 예약 취소 - paymentId={}, reservationId={}", paymentId, reservation.getId());
+    }
+
+    //[TX 1] 취소 검증 + 환불액 확정 + 의도 기록, 외부 호출 전에 반드시 커밋되어야 한다
+    public ReservationCancelAdapter.CancelPreparation prepareCancel(Long reservationId, Long userId,
+                                                                    String reason) {
+        Payment payment = paymentRepository.findSettledByReservationIdForUpdate(reservationId)
+                .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+
+        Reservation reservation = payment.getReservation();
+        reservation.equalsUser(userId); //본인 확인
+
+        if(payment.isRefundSettled()) throw new PaymentException(ErrorCode.ALREADY_REFUNDED);
+        if(payment.getStatus() != PaymentStatus.COMPLETED) throw new PaymentException(ErrorCode.PAYMENT_NOT_CANCELABLE);
+        //가예약, 체크아웃, 취소건 차단 - CONFIRM 상태의 예약만 취소 가능
+        if(!reservation.isConfirmed()) throw new ReservationException(ErrorCode.RESERVATION_NOT_CANCELABLE);
+
+        RefundCalculation calc = refundCalculator.calculate(reservation, payment);
+        payment.markRefundRequested(calc, reason, LocalDateTime.now(clock));
+
+        return new ReservationCancelAdapter.CancelPreparation(payment.getPaymentId(), calc);
     }
 
 
@@ -191,11 +242,10 @@ public class ReservationService {
 
         PageRequest pageRequest = PageRequest.of(0, size);
 
-        Slice<ReservationGetResponse> reservationList = null;
-                //reservationRepository.findByReservationStatus(status, cursorId, user.getUserId(), pageRequest);
+        Slice<ReservationGetResponse> reservationList = reservationRepository.findByReservationStatus(status, cursorId, user.getUserId(), pageRequest);
 
         if(reservationList.isEmpty()){
-            return new CursorPage<>(null,null,false);
+            return CursorPage.empty();
         }
 
         List<ReservationGetResponse> list = reservationList.getContent();

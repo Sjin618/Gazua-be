@@ -1,5 +1,6 @@
 package com.acc.gazua.domain.accommodation.entity;
 
+import com.acc.gazua.domain.policy.entity.CancellationPolicyType;
 import com.acc.gazua.domain.region.entity.Region;
 import com.acc.gazua.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -16,7 +17,8 @@ import java.math.BigDecimal;
 @Builder
 public class Accommodation {
 
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     @Column(name = "accommodation_id")
     private Long id;
 
@@ -31,7 +33,8 @@ public class Accommodation {
     @JoinColumn(name = "region_id", nullable = false)
     private Region region; //지역 코드
 
-    @Enumerated(EnumType.STRING) private AccommodationType type;
+    @Enumerated(EnumType.STRING)
+    private AccommodationType type;
 
     private String thumbnailUrl;
 
@@ -42,7 +45,7 @@ public class Accommodation {
     @Builder.Default
     private BigDecimal averageStar = new BigDecimal("0.0"); //숙소 리뷰 평균 별점
 
-    @Column(precision = 15,scale = 1)
+    @Column(precision = 15, scale = 1)
     @Builder.Default
     private BigDecimal totalStar = new BigDecimal("0.0"); //모든 리뷰 별점 합
 
@@ -50,4 +53,13 @@ public class Accommodation {
     private Integer reviewCount = 0; //리뷰 수
 
     private Integer maxCapacity; // 숙소가 가진 방들 중 최대 인원 수
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    @Builder.Default
+    private CancellationPolicyType cancellationPolicy = CancellationPolicyType.MODERATE; //숙소 환불 정책
+
+    public void changeCancellationPolicy(CancellationPolicyType policy) {
+        this.cancellationPolicy = policy;
+    }
 }

@@ -31,9 +31,13 @@ public enum ErrorCode {
     //예약 관련 에러
     RESERVATION_NOT_FOUND(400,"R001","존재하지 않는 예약입니다."),
     RESERVATION_NOT_AVAILABLE(400,"R002","예약이 불가능합니다."),
+    RESERVATION_NOT_CANCELABLE(400,"R003","취소할 수 없는 예약입니다"),
 
     //결제 관련 에러
     PAYMENT_NOT_FOUND(400,"P001","존재하지 않는 결제입니다."),
+    PAYMENT_NOT_CANCELABLE(400,"P002","취소할 수 없는 결제입니다."),
+    ALREADY_REFUNDED(400,"P003","이미 환불된 결제입니다."),
+    REFUND_REQUEST_FAILED(503,"P004","환불 요청에 실패했습니다. 잠시 후 다시 시도해주세요."),
 
     //Jwt 관련 에러
     INVALID_TOKEN(401,"J001","잘못된 서명 또는 유효하지 않은 토큰입니다."),

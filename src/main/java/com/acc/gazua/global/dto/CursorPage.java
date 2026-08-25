@@ -11,4 +11,8 @@ public class CursorPage <T>{
     private List<T> content;
     private String nextCursorValue; // 정렬 기준 값 + "_" + cursorId
     private boolean hasNext;
+
+    public static <T> CursorPage <T> empty(){
+        return new CursorPage<>(List.of(), null, false);
+    }
 }

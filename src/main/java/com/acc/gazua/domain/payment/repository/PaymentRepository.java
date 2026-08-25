@@ -18,5 +18,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Payment p WHERE p.paymentId = :paymentId")
-    Optional<Payment> findByPaymentIdForUpdate(@Param("pyamentId") String paymentId);
+    Optional<Payment> findByPaymentIdForUpdate(@Param("paymentId") String paymentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.reservation.id = :reservationId " +
+            "AND p.status <> com.acc.gazua.domain.payment.entity.PaymentStatus.READY")
+    Optional<Payment> findSettledByReservationIdForUpdate(@Param("reservationId") Long reservationId);
+
+    @Query("SELECT p FROM Payment p JOIN FETCH p.reservation r JOIN FETCH r.room " +
+            "WHERE r.id = :reservationId " +
+            "AND p.status <> com.acc.gazua.domain.payment.entity.PaymentStatus.READY")
+    Optional<Payment> findSettledByReservationId(@Param("reservationId") Long reservationId);
 }

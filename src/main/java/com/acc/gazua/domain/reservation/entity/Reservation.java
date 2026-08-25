@@ -1,5 +1,6 @@
 package com.acc.gazua.domain.reservation.entity;
 
+import com.acc.gazua.domain.policy.entity.RefundPolicySnapshot;
 import com.acc.gazua.domain.room.entity.Room;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.global.entity.CheckDateTime;
@@ -30,6 +31,8 @@ public class Reservation {
     @Embedded
     private CheckDateTime checkDateTime;
 
+    @Embedded
+    private RefundPolicySnapshot refundPolicy; // 예약 시점 환불 정책(불변)
 
 
     public boolean validateReviewAuthority(Long userId){

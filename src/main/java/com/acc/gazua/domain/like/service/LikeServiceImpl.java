@@ -69,7 +69,7 @@ public class LikeServiceImpl implements LikeService{
         Slice<LikeAccommodationDto> likeList = likeRepository.getLikeList(userId, cursorId, pageRequest);
 
         if(likeList.isEmpty()){
-            return new CursorPage<>(null,null,false);
+            return CursorPage.empty();
         }
 
         List<LikeAccommodationDto> list = likeList.getContent();

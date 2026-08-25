@@ -41,16 +41,13 @@ public class PaymentSyncService {
         if(snapshot.isPaid()){
             return handlePaid(snapshot);
         }
-        if (snapshot.isFullyCancelled()) {
-            return reservationService.applyCancelled(paymentId, snapshot.cancelledAt(), "PG 취소 반영");
+        if (snapshot.isFullyCancelled() || snapshot.isPartialCancelled()) {
+            return reservationService.applyCancelled(paymentId, snapshot.cancelledAt(), "취소 정책 적용 환불",
+                    snapshot.cancelledTotal(), snapshot.isFullyCancelled());
         }
-        if (snapshot.isPartialCancelled()) {
-            log.error("부분취소 감지 - 수동 확인 필요 - paymentId={}, cancelled={}"
-                    , paymentId, snapshot.cancelledTotal());
-            return PaymentSyncResult.PARTIAL_CANCEL_UNSUPPORTED;
-        }
+
         if (snapshot.isFailed()) {
-            return reservationService.applyCancelled(paymentId, Instant.now(), "결제 실패");
+            return reservationService.applyCancelled(paymentId, Instant.now(), "결제 실패", 0L, true);
         }
 
         // READY / PENDING / VIRTUAL_ACCOUNT_ISSUED / PAY_PENDING
@@ -69,7 +66,7 @@ public class PaymentSyncService {
         log.warn("위변조 의심 - 자동 환불 진행 - paymentId={}", snapshot.paymentId());
         portOneClient.refundPayment(snapshot.paymentId(), null, "결제 금액이 달라 환불 처리되었습니다.(위변조 의심)");
 
-        reservationService.applyCancelled(snapshot.paymentId(), Instant.now(), "결제 금액 불일치(위변조 의심)");
+        reservationService.applyCancelled(snapshot.paymentId(), Instant.now(), "결제 금액 불일치(위변조 의심)", snapshot.paidTotal(), true);
 
         return PaymentSyncResult.AMOUNT_MISMATCH;
     }

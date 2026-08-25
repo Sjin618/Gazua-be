@@ -1,4 +1,4 @@
-package com.acc.gazua.domain.reservation.service;
+package com.acc.gazua.domain.reservation.adapter;
 
 import com.acc.gazua.domain.payment.entity.Payment;
 import com.acc.gazua.domain.payment.exception.PaymentException;
