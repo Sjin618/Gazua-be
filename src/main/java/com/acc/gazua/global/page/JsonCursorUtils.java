@@ -1,6 +1,8 @@
 package com.acc.gazua.global.page;
 
 import com.acc.gazua.global.dto.CustomCursor;
+import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
@@ -22,7 +24,7 @@ public class JsonCursorUtils {
             String json = objectMapper.writeValueAsString(cursor);
             return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
         }catch(Exception e){
-            throw new IllegalArgumentException("커서 직렬화에 실패했습니다.", e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -36,7 +38,7 @@ public class JsonCursorUtils {
             String json = new String(decodedBytes, StandardCharsets.UTF_8);
             return objectMapper.readValue(json,CustomCursor.class);
         }catch(Exception e){
-            throw new IllegalArgumentException("잘못된 형식의 커서입니다.", e);
+            throw new BusinessException(ErrorCode.INVALID_CURSOR, e);
         }
     }
 }

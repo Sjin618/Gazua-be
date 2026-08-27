@@ -4,6 +4,7 @@ import com.acc.gazua.domain.accommodation.dto.AccommodationRegisterRequest;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.entity.CheckDate;
+import com.acc.gazua.domain.accommodation.exception.AccommodationException;
 import com.acc.gazua.domain.accommodation.repository.AccommodationQueryRepository;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.roominventory.dto.AvailableRoomDto;
@@ -14,6 +15,7 @@ import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.CustomCursor;
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.exception.BusinessException;
 import com.acc.gazua.global.page.JsonCursorUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,7 +63,7 @@ public class AccommodationService {
                     cursorId,
                     limit);
         } else {
-            throw new IllegalArgumentException("잘못된 형식의 정렬입니다.");
+            throw new BusinessException(ErrorCode.INVALID_SORT_TYPE);
         }
 
         //더 이상 항목이 존재하지 않는다면 빈 리스트 반환
@@ -78,7 +80,7 @@ public class AccommodationService {
         //숙소에서 최저가 방 가격 가져오기
         long stayDays = ChronoUnit.DAYS.between(checkDate.getCheckIn(), checkDate.getCheckOut());
         if (stayDays <= 0) {
-            throw new IllegalArgumentException("체크아웃 날짜는 체크인 날짜보다 최소 1일 이상 커야합니다.");
+            throw new AccommodationException(ErrorCode.INVALID_CHECK_DATE);
         }
 
         List<Long> accIds = accs.stream()

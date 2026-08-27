@@ -19,6 +19,8 @@ public enum ErrorCode {
     TYPE_MISMATCH(400, "C009", "요청 파라미터 타입이 올바르지 않습니다."),
     DATA_INTEGRITY_VIOLATION(409, "C010", "요청을 처리할 수 없습니다. 입력값을 확인해주세요."),
     EXTERNAL_API_ERROR(503, "C011", "외부 서비스 연동에 실패했습니다. 잠시 후 다시 시도해주세요."),
+    INVALID_CURSOR(400,"C012","잘못된 형식의 커서입니다."),
+    INVALID_SORT_TYPE(400,"C013","잘못된 정렬 형식입니다,"),
 
     //유저 관련 에러
     LOGIN_FAILED(400,"U001","아이디 또는 비밀번호가 일치하지 않습니다."),
@@ -28,6 +30,7 @@ public enum ErrorCode {
 
     //숙소 관련 에러
     ACCOMMODATION_NOT_FOUND(404,"A001","존재하지 않는 숙소입니다."),
+    INVALID_CHECK_DATE(400,"A002","체크아웃 날짜는 체크인 날짜보다 최소 1일 이상 커야합니다."),
 
     //좋아요 관련 에러
     ALREADY_LIKE(400,"L001","이미 좋아요한 숙소입니다."),
@@ -41,6 +44,12 @@ public enum ErrorCode {
     RESERVATION_NOT_AVAILABLE(400,"R002","예약이 불가능합니다."),
     RESERVATION_NOT_CANCELABLE(400,"R003","취소할 수 없는 예약입니다"),
     INVALID_RESERVATION_STATUS(400,"R004","알 수 없는 상태입니다."),
+
+    //방 재고 관련 에러
+    OUT_OF_STOCK(400,"RI001","해당 날짜에 방 재고가 없습니다."),
+
+    //방 관련 에러
+    ROOM_NOT_FOUND(404,"RM001","존재하지 않는 방입니다."),
 
     //결제 관련 에러
     PAYMENT_NOT_FOUND(404,"P001","존재하지 않는 결제입니다."),

@@ -18,8 +18,10 @@ import com.acc.gazua.domain.reservation.entity.ReservationStatus;
 import com.acc.gazua.domain.reservation.exception.ReservationException;
 import com.acc.gazua.domain.reservation.repository.ReservationRepository;
 import com.acc.gazua.domain.room.entity.Room;
+import com.acc.gazua.domain.room.exception.RoomException;
 import com.acc.gazua.domain.room.repository.RoomRepository;
 import com.acc.gazua.domain.roominventory.entity.RoomInventory;
+import com.acc.gazua.domain.roominventory.exception.RoomInventoryException;
 import com.acc.gazua.domain.roominventory.repository.RoomInventoryRepository;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
@@ -85,7 +87,7 @@ public class ReservationService {
         for (RoomInventory inventory : inventories) {
             if(inventory.getAvailableCount() < 1){
                 //재고 없음 에러 던지기
-                throw new IllegalStateException("재고가 부족합니다.");
+                throw new RoomInventoryException(ErrorCode.OUT_OF_STOCK);
             }
         }
 
@@ -95,7 +97,7 @@ public class ReservationService {
 
         //가예약 생성 후 저장
         Room referenceRoom = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 방입니다."));
+                .orElseThrow(() -> new RoomException(ErrorCode.ROOM_NOT_FOUND));
 
         LocalDateTime checkInDateTime = LocalDateTime.of(checkIn, referenceRoom.getCheckTime().getCheckIn());
         LocalDateTime checkOutDateTime = LocalDateTime.of(checkOut, referenceRoom.getCheckTime().getCheckOut());
@@ -257,7 +259,7 @@ public class ReservationService {
         boolean hasNext = reservationList.hasNext();
         String encodedCursor = hasNext ? jsonCursorUtils.serialize(new CustomCursor(null, list.get(list.size() - 1).reservationId())) : null;
 
-        return new CursorPage<>(list, encodedCursor, reservationList.hasNext());
+        return new CursorPage<>(list, encodedCursor, hasNext);
 
     }
 

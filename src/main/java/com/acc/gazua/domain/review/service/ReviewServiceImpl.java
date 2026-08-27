@@ -15,6 +15,7 @@ import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.exception.BusinessException;
 import com.acc.gazua.global.page.JsonCursorUtils;
 import com.acc.gazua.global.page.PageHandler;
 import com.acc.gazua.global.security.details.CustomUserDetails;
@@ -109,7 +110,7 @@ public class ReviewServiceImpl implements ReviewService{
                                                           Long accId) {
         //정렬 기준이 없을 시 에러
         if(sortBy == null || sortBy.isBlank()){
-            throw new IllegalArgumentException("정렬 기준 입력은 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_SORT_TYPE);
         }
 
         int limit = size + 1;
@@ -118,7 +119,7 @@ public class ReviewServiceImpl implements ReviewService{
         PageHandler<ReviewGetResponse> pageHandler = pageHandlers.stream()
                 .filter(p -> p.supports(sortBy))
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 정렬 타입입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_SORT_TYPE));
 
         List<ReviewGetResponse> list = pageHandler.fetch(accId, cursor, limit);
 
