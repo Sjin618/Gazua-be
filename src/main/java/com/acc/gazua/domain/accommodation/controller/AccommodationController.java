@@ -28,19 +28,13 @@ public class AccommodationController {
                                                                                                 @RequestParam(required = false) String sortType,
                                                                                                 @RequestParam(required = false) String cursor,
                                                                                                 @RequestParam(defaultValue = "10") int size) {
-        try {
-            System.out.println(checkDate);
-            CursorPage<AccommodationSearchDto> accommodationPage = accommodationService.searchAccommodation(region,
-                    personal,
-                    checkDate,
-                    sortType,
-                    cursor,
-                    size);
-            return ResponseEntity.ok(ApiResponse.success(accommodationPage, "숙소 조회 성공"));
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-        return null;
+        CursorPage<AccommodationSearchDto> accommodationPage = accommodationService.searchAccommodation(region,
+                personal,
+                checkDate,
+                sortType,
+                cursor,
+                size);
+        return ResponseEntity.ok(ApiResponse.success(accommodationPage, "숙소 조회 성공"));
     }
 
     //숙소 등록

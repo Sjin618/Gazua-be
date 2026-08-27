@@ -11,33 +11,46 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE(400, "C001", "잘못된 입력값입니다."),
     METHOD_NOT_ALLOWED(405, "C002", "허용되지 않은 메서드입니다."),
     INTERNAL_SERVER_ERROR(500, "C003", "서버 내부 오류입니다."),
+    UNAUTHORIZED(401, "C004", "인증이 필요합니다."),
+    FORBIDDEN(403, "C005", "접근 권한이 없습니다."),
+    NOT_FOUND(404, "C006", "요청하신 리소스를 찾을 수 없습니다."),
+    UNSUPPORTED_MEDIA_TYPE(415, "C007", "지원하지 않는 미디어 타입입니다."),
+    MISSING_PARAMETER(400, "C008", "필수 요청 파라미터가 누락되었습니다."),
+    TYPE_MISMATCH(400, "C009", "요청 파라미터 타입이 올바르지 않습니다."),
+    DATA_INTEGRITY_VIOLATION(409, "C010", "요청을 처리할 수 없습니다. 입력값을 확인해주세요."),
+    EXTERNAL_API_ERROR(503, "C011", "외부 서비스 연동에 실패했습니다. 잠시 후 다시 시도해주세요."),
 
     //유저 관련 에러
     LOGIN_FAILED(400,"U001","아이디 또는 비밀번호가 일치하지 않습니다."),
     DUPLICATE_EMAIL(400,"U002","이미 존재하는 이메일입니다."),
     DELETED_USER(400,"U003","탈퇴한 계정입니다."),
-    USER_NOT_FOUND(400,"U004","존재하지 않는 회원입니다."),
+    USER_NOT_FOUND(404,"U004","존재하지 않는 회원입니다."),
 
     //숙소 관련 에러
-    ACCOMMODATION_NOT_FOUND(400,"A001","존재하지 않는 숙소입니다."),
+    ACCOMMODATION_NOT_FOUND(404,"A001","존재하지 않는 숙소입니다."),
 
     //좋아요 관련 에러
     ALREADY_LIKE(400,"L001","이미 좋아요한 숙소입니다."),
 
     //리뷰 관련 에러
-    REVIEW_NOT_FOUND(400,"RE001","존재하지 않는 리뷰입니다."),
+    REVIEW_NOT_FOUND(404,"RE001","존재하지 않는 리뷰입니다."),
     ALREADY_CREATE_REVIEW(400,"RE002","해당 예약에 대해서 이미 작성한 리뷰가 존재합니다."),
 
     //예약 관련 에러
-    RESERVATION_NOT_FOUND(400,"R001","존재하지 않는 예약입니다."),
+    RESERVATION_NOT_FOUND(404,"R001","존재하지 않는 예약입니다."),
     RESERVATION_NOT_AVAILABLE(400,"R002","예약이 불가능합니다."),
     RESERVATION_NOT_CANCELABLE(400,"R003","취소할 수 없는 예약입니다"),
+    INVALID_RESERVATION_STATUS(400,"R004","알 수 없는 상태입니다."),
 
     //결제 관련 에러
-    PAYMENT_NOT_FOUND(400,"P001","존재하지 않는 결제입니다."),
+    PAYMENT_NOT_FOUND(404,"P001","존재하지 않는 결제입니다."),
     PAYMENT_NOT_CANCELABLE(400,"P002","취소할 수 없는 결제입니다."),
     ALREADY_REFUNDED(400,"P003","이미 환불된 결제입니다."),
     REFUND_REQUEST_FAILED(503,"P004","환불 요청에 실패했습니다. 잠시 후 다시 시도해주세요."),
+    PAYMENT_AMOUNT_MISMATCH(400,"P005","결제 금액이 일치하지 않습니다."),
+    PAYMENT_CANCELLED_OR_FAILED(400,"P006","결제가 취소되었거나 실패했습니다."),
+    PAYMENT_STATUS_UNKNOWN(500,"P007","결제 상태를 확인할 수 없습니다. 고객센터로 문의해 주세요."),
+    PAYMENT_CONFIRM_DELAYED(503,"P008","결제 확인이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
 
     //Jwt 관련 에러
     INVALID_TOKEN(401,"J001","잘못된 서명 또는 유효하지 않은 토큰입니다."),

@@ -1,13 +1,10 @@
 package com.acc.gazua.domain.payment.exception;
 
 import com.acc.gazua.global.dto.ErrorCode;
-import lombok.Getter;
+import com.acc.gazua.global.exception.BusinessException;
 
-@Getter
-public class PaymentException extends RuntimeException {
-    private final ErrorCode errorCode;
-
+public class PaymentException extends BusinessException {
     public PaymentException(ErrorCode errorCode) {
-        this.errorCode = errorCode;
+        super(errorCode);
     }
 }

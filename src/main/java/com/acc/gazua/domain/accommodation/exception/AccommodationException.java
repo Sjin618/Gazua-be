@@ -1,12 +1,10 @@
 package com.acc.gazua.domain.accommodation.exception;
 
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.exception.BusinessException;
 
-public class AccommodationException extends RuntimeException {
-    private ErrorCode errorCode;
-
+public class AccommodationException extends BusinessException {
     public AccommodationException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+        super(errorCode);
     }
 }

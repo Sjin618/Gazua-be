@@ -1,5 +1,6 @@
 package com.acc.gazua.domain.reservation.controller;
 
+import com.acc.gazua.domain.payment.exception.PaymentException;
 import com.acc.gazua.domain.payment.service.PaymentSyncResult;
 import com.acc.gazua.domain.policy.dto.RefundCalculation;
 import com.acc.gazua.domain.reservation.adapter.ReservationCancelAdapter;
@@ -8,11 +9,12 @@ import com.acc.gazua.domain.reservation.entity.ReservationStatus;
 import com.acc.gazua.domain.reservation.adapter.ReservationConfirmAdapter;
 import com.acc.gazua.domain.reservation.service.ReservationService;
 import com.acc.gazua.global.dto.ApiResponse;
+import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.security.details.CustomUserDetails;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +42,7 @@ public class ReservationController {
     public ResponseEntity<ApiResponse<Void>> confirmReservation(@AuthenticationPrincipal CustomUserDetails user,
                                                                 @RequestBody ReservationConfirmRequest request) {
         PaymentSyncResult result = reservationConfirmAdapter.confirmReservation(request, user.getUserId());
+        //실패 상태는 예외로 올려 GlobalExceptionHandler 가 ErrorResponse 로 변환한다
         return switch(result){
             case CONFIRMED, ALREADY_DONE ->
                     ResponseEntity.ok(ApiResponse.success("예약이 확정되었습니다."));
@@ -48,22 +51,22 @@ public class ReservationController {
                     ResponseEntity.accepted().body(ApiResponse.success("결제 확인 중입니다."));
 
             case PORTONE_UNAVAILABLE ->
-                    ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ApiResponse.fail("결제 확인이 지연되고 있습니다. 잠시 후 다시 시도해주세요"));
+                    throw new PaymentException(ErrorCode.PAYMENT_CONFIRM_DELAYED);
 
             case AMOUNT_MISMATCH ->
-                    ResponseEntity.badRequest().body(ApiResponse.fail("결제 금액이 일치하지 않습니다."));
+                    throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
 
             case CANCELLED, FAILED ->
-                    ResponseEntity.badRequest().body(ApiResponse.fail("결제가 취소되었거나 실패했습니다."));
+                    throw new PaymentException(ErrorCode.PAYMENT_CANCELLED_OR_FAILED);
 
-            case UNKNOWN_PAYMENT, PARTIAL_CANCEL_UNSUPPORTED -> ResponseEntity.internalServerError()
-                    .body(ApiResponse.fail("결제 상태를 확인할 수 없습니다. 고객센터로 문의해 주세요."));
+            case UNKNOWN_PAYMENT, PARTIAL_CANCEL_UNSUPPORTED ->
+                    throw new PaymentException(ErrorCode.PAYMENT_STATUS_UNKNOWN);
         };
     }
 
     @PostMapping("/{reservationId}/cancel")
     public ResponseEntity<ApiResponse<ReservationCancelResponse>> cancelReservation(@AuthenticationPrincipal CustomUserDetails user,
-                                                               @PathVariable("id") Long reservationId,
+                                                               @PathVariable("reservationId") Long reservationId,
                                                                @RequestBody ReservationCancelRequest request){
 
         RefundCalculation calc = reservationCancelAdapter.cancel(user.getUserId(), reservationId, request.getReason());
@@ -75,8 +78,8 @@ public class ReservationController {
     public ResponseEntity<ApiResponse<CursorPage<ReservationGetResponse>>> getReservationList(@AuthenticationPrincipal CustomUserDetails user,
                                                                                               @RequestParam ReservationStatus status,
                                                                                               @RequestParam(required = false) String cursor,
-                                                                                              @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.success(reservationService.getReservationList(user, status, cursor, size), "예약 내역 조회 성공"));
+                                                                                              @RequestParam(defaultValue = "10") @Min(10) @Max(30) int size) {
+        return ResponseEntity.ok(ApiResponse.success(reservationService.getReservationList(user.getUserId(), status, cursor, size), "예약 내역 조회 성공"));
     }
 
 

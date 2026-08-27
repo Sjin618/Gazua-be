@@ -1,14 +1,10 @@
 package com.acc.gazua.global.security.exception;
 
 import com.acc.gazua.global.dto.ErrorCode;
-import lombok.Getter;
+import com.acc.gazua.global.exception.BusinessException;
 
-@Getter
-public class JwtCustomException extends RuntimeException{
-    private ErrorCode errorCode;
-
+public class JwtCustomException extends BusinessException {
     public JwtCustomException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+        super(errorCode);
     }
 }

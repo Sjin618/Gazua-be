@@ -232,17 +232,21 @@ public class ReservationService {
     }
 
 
-
-    public CursorPage<ReservationGetResponse> getReservationList(CustomUserDetails user,
+    @Transactional(readOnly = true)
+    public CursorPage<ReservationGetResponse> getReservationList(Long userId,
                                                                  ReservationStatus status,
                                                                  String cursor,
                                                                  int size) {
+        if(!status.isListable()){
+            throw new ReservationException(ErrorCode.INVALID_RESERVATION_STATUS);
+        }
+
         CustomCursor customCursor = jsonCursorUtils.deserialize(cursor);
         Long cursorId = customCursor != null ? customCursor.cursorId() : Long.MAX_VALUE;
 
         PageRequest pageRequest = PageRequest.of(0, size);
 
-        Slice<ReservationGetResponse> reservationList = reservationRepository.findByReservationStatus(status, cursorId, user.getUserId(), pageRequest);
+        Slice<ReservationGetResponse> reservationList = reservationRepository.findByReservationStatus(status, cursorId, userId, pageRequest);
 
         if(reservationList.isEmpty()){
             return CursorPage.empty();
@@ -251,7 +255,7 @@ public class ReservationService {
         List<ReservationGetResponse> list = reservationList.getContent();
 
         ReservationGetResponse lastItem = list.get(list.size() - 1);
-        String encodedCursor = jsonCursorUtils.serialize(new CustomCursor(null, lastItem.getId()));
+        String encodedCursor = jsonCursorUtils.serialize(new CustomCursor(null, lastItem.reservationId()));
 
         return new CursorPage<>(list, encodedCursor, reservationList.hasNext());
 

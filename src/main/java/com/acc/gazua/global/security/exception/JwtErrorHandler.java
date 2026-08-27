@@ -10,7 +10,6 @@ import java.io.IOException;
 public class JwtErrorHandler {
 
     public static void sendErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
-        System.out.println(errorCode.getMessage());
         response.setStatus(errorCode.getStatus());
         response.setContentType("application/json;charset=UTF-8");
 

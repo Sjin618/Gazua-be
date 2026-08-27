@@ -66,7 +66,7 @@ public class AccommodationService {
 
         //더 이상 항목이 존재하지 않는다면 빈 리스트 반환
         if (accs.isEmpty()) {
-            return new CursorPage<>(Collections.emptyList(), null, false);
+            return CursorPage.empty();
         }
 
         //다음 요소가 있는지 확인

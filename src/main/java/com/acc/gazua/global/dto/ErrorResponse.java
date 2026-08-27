@@ -1,6 +1,7 @@
 package com.acc.gazua.global.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.validation.BindingResult;
 import java.util.List;
 
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
     private String code;
     private String message;

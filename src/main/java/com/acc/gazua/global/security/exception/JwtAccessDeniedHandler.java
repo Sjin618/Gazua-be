@@ -14,6 +14,6 @@ import java.io.IOException;
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        JwtErrorHandler.sendErrorResponse(response, ErrorCode.METHOD_NOT_ALLOWED);
+        JwtErrorHandler.sendErrorResponse(response, ErrorCode.FORBIDDEN);
     }
 }
