@@ -14,11 +14,13 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     boolean existsByAccommodationIdAndUserId(Long accId, Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Like l WHERE l.accommodation.id = :accId and l.user.id = :userId")
     void directDelete(Long accId, Long userId);
 
-    @Query("SELECT a.id,a.name,a.averageStar,a.reviewCount,a.type,a.thumbnailUrl " +
+    @Query("SELECT l.id as likeId, " +
+            "a.id as accommodationId ,a.name as name,a.averageStar as averageStar, " +
+            "a.reviewCount as reviewCount,a.type as type,a.thumbnailUrl as thumbnailUrl " +
             "FROM Like l JOIN l.accommodation a " +
             "WHERE l.user.id = :userId " +
             "And l.id < :cursorId " +

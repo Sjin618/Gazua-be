@@ -17,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final Clock clock;
     public void signup(UserSignUpRequest request){
         //이메일 중복 체크
         if(userRepository.existsByEmail(request.email())){
@@ -52,7 +56,7 @@ public class UserServiceImpl implements UserService {
         Long userId = userDetails.getUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
-        user.delete();
+        user.delete(LocalDateTime.now(clock));
         //유저와 관련된 모든 refresh token DB에서 삭제
         refreshTokenRepository.deleteByUserId(userId);
     }

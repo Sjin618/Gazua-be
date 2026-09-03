@@ -1,7 +1,7 @@
 package com.acc.gazua.domain.accommodation.entity;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -10,6 +10,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @ToString
 public class CheckDate {
-    LocalDate checkIn;
-    LocalDate checkOut;
+    @NotNull LocalDate checkIn;
+    @NotNull LocalDate checkOut;
 }

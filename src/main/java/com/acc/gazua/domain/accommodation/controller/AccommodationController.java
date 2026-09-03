@@ -2,7 +2,6 @@ package com.acc.gazua.domain.accommodation.controller;
 
 import com.acc.gazua.domain.accommodation.dto.AccommodationRegisterRequest;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
-import com.acc.gazua.domain.accommodation.dto.AccommodationSearchRequest;
 import com.acc.gazua.domain.accommodation.entity.CheckDate;
 import com.acc.gazua.domain.accommodation.service.AccommodationService;
 import com.acc.gazua.global.dto.ApiResponse;

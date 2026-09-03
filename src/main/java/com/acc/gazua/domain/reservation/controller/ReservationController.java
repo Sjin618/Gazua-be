@@ -3,15 +3,15 @@ package com.acc.gazua.domain.reservation.controller;
 import com.acc.gazua.domain.payment.exception.PaymentException;
 import com.acc.gazua.domain.payment.service.PaymentSyncResult;
 import com.acc.gazua.domain.policy.dto.RefundCalculation;
-import com.acc.gazua.domain.reservation.adapter.ReservationCancelAdapter;
+import com.acc.gazua.domain.reservation.facade.ReservationFacade;
 import com.acc.gazua.domain.reservation.dto.*;
 import com.acc.gazua.domain.reservation.entity.ReservationStatus;
-import com.acc.gazua.domain.reservation.adapter.ReservationConfirmAdapter;
-import com.acc.gazua.domain.reservation.service.ReservationService;
+import com.acc.gazua.domain.reservation.service.ReservationQueryService;
 import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.security.details.CustomUserDetails;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -23,25 +23,26 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/reservation")
 public class ReservationController {
-    private final ReservationService reservationService;
-    private final ReservationConfirmAdapter reservationConfirmAdapter; //결제 확정 관련 처리
-    private final ReservationCancelAdapter reservationCancelAdapter;   //결제 환불 관련 처리
+    private final ReservationQueryService reservationQueryService;
+    private final ReservationFacade reservationFacade; // 트랜잭션 밖에서 해야 할 메서드들을 실행한다
     //가예약 만들기 or 가져오기
     //어떤 방에 대한 예약인지
     //어떤 사용자가 예약하는지
     //언제 체크인 하고 체크아웃 하는지
     @PostMapping("/init")
-    public ResponseEntity<ApiResponse<ReservationInitResponse>> getAndCreateReservation(@RequestBody ReservationInitRequest request,
+    public ResponseEntity<ApiResponse<ReservationInitResponse>> getAndCreateReservation(@Valid @RequestBody ReservationInitRequest request,
                                                                                         @AuthenticationPrincipal CustomUserDetails user){
 
-        return ResponseEntity.ok(ApiResponse.success(reservationService.getAndCreateReservation(request,user.getUserId()),"가예약 생성 및 조회 성공")
+        return ResponseEntity.ok(ApiResponse.success(reservationFacade.init(request,user.getUserId()),"가예약 생성 및 조회 성공")
         );
     }
 
+    //PortOne 동기화 API
+    //사용자 결제 후 프론트에서 호출해야 한다.
     @PostMapping("/confirm")
     public ResponseEntity<ApiResponse<Void>> confirmReservation(@AuthenticationPrincipal CustomUserDetails user,
-                                                                @RequestBody ReservationConfirmRequest request) {
-        PaymentSyncResult result = reservationConfirmAdapter.confirmReservation(request, user.getUserId());
+                                                                @Valid @RequestBody ReservationConfirmRequest request) {
+        PaymentSyncResult result = reservationFacade.confirmReservation(request, user.getUserId());
         //실패 상태는 예외로 올려 GlobalExceptionHandler 가 ErrorResponse 로 변환한다
         return switch(result){
             case CONFIRMED, ALREADY_DONE ->
@@ -59,7 +60,13 @@ public class ReservationController {
             case CANCELLED, FAILED ->
                     throw new PaymentException(ErrorCode.PAYMENT_CANCELLED_OR_FAILED);
 
-            case UNKNOWN_PAYMENT, PARTIAL_CANCEL_UNSUPPORTED ->
+            case RESERVATION_EXPIRED ->
+                    throw new PaymentException(ErrorCode.RESERVATION_EXPIRED);
+
+            case MANUAL_REVIEW_REQUIRED ->
+                    throw new PaymentException(ErrorCode.PAYMENT_MANUAL_REVIEW);
+
+            case UNKNOWN_PAYMENT ->
                     throw new PaymentException(ErrorCode.PAYMENT_STATUS_UNKNOWN);
         };
     }
@@ -67,10 +74,11 @@ public class ReservationController {
     @PostMapping("/{reservationId}/cancel")
     public ResponseEntity<ApiResponse<ReservationCancelResponse>> cancelReservation(@AuthenticationPrincipal CustomUserDetails user,
                                                                @PathVariable("reservationId") Long reservationId,
-                                                               @RequestBody ReservationCancelRequest request){
+                                                               @Valid @RequestBody ReservationCancelRequest request){
 
-        RefundCalculation calc = reservationCancelAdapter.cancel(user.getUserId(), reservationId, request.getReason());
-        return ResponseEntity.ok(ApiResponse.success(ReservationCancelResponse.from(calc),"예약이 취소되었습니다."));
+        CancelOutcome outcome = reservationFacade.cancel(user.getUserId(), reservationId, request.getReason());
+        return ResponseEntity.ok(ApiResponse.success(ReservationCancelResponse.from(outcome.calc(), outcome.settled()),
+                outcome.settled() ? "예약이 취소되었습니다." : "예약 취소가 접수되었습니다."));
     }
 
     //예약 내역(리스트) 가져오기 (이용 전, 이용 후, 취소 환불)
@@ -79,7 +87,7 @@ public class ReservationController {
                                                                                               @RequestParam ReservationStatus status,
                                                                                               @RequestParam(required = false) String cursor,
                                                                                               @RequestParam(defaultValue = "10") @Min(10) @Max(30) int size) {
-        return ResponseEntity.ok(ApiResponse.success(reservationService.getReservationList(user.getUserId(), status, cursor, size), "예약 내역 조회 성공"));
+        return ResponseEntity.ok(ApiResponse.success(reservationQueryService.getReservationList(user.getUserId(), status, cursor, size), "예약 내역 조회 성공"));
     }
 
 

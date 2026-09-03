@@ -20,6 +20,7 @@ public class Payment extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
     @Column(nullable = false, unique = true)

@@ -13,17 +13,13 @@ import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review,Long> {
-
-    @Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.id = :id")
-    Optional<Review> findByIdWithUser(@Param("id") Long id);
-
-    @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.accommodation.id = :accId and r.user.id = :userId")
-    boolean existsByAccommodationIdAndUserId(@Param("accId") Long accId,@Param("userId") Long userId);
+    @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.reservation.id = :reservationId")
+    boolean existsByReservationId(@Param("reservationId") Long reservationId);
 
     //리뷰 평점 낮은 순
     @Query(value = """
             SELECT u.nickname,u.profile_Image as profileImage,r.star,r.sentence,r.review_id as reviewId
-            FROM Review r JOIN User u on r.user_id = u.user_id
+            FROM Review r JOIN users u on r.user_id = u.user_id
             WHERE ((:star IS NULL AND :id IS NULL)
             OR (r.star, r.review_id) > (:star, :id))
             AND r.accommodation_id = :accId
@@ -39,7 +35,7 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
     //리뷰 평점 높은 순
     @Query(value = """
             SELECT u.nickname,u.profile_Image as profileImage,r.star,r.sentence,r.review_id as reviewId
-            FROM Review r JOIN User u on r.user_id = u.user_id
+            FROM Review r JOIN users u on r.user_id = u.user_id
             WHERE ((:star IS NULL AND :id IS NULL)
             OR (r.star, r.review_id) < (:star, :id))
             AND r.accommodation_id = :accId
@@ -54,7 +50,7 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
 
     @Query(value = """
             SELECT u.nickname,u.profile_Image as profileImage,r.star,r.sentence,r.review_id as reviewId
-            FROM Review r JOIN User u on r.user_id = u.user_id
+            FROM Review r JOIN users u on r.user_id = u.user_id
             WHERE ((:id IS NULL)
             OR (:id > r.review_id))
             AND r.accommodation_id = :accId

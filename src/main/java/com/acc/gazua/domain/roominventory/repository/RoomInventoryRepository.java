@@ -33,7 +33,8 @@ public interface RoomInventoryRepository extends JpaRepository<RoomInventory, Lo
             "FROM RoomInventory r " +
             "WHERE r.room.id = :roomId " +
             "AND r.date >= :checkIn " +
-            "AND r.date < :checkOut")
+            "AND r.date < :checkOut " +
+            "ORDER BY r.date ASC")
     List<RoomInventory> findInventoriesForUpdate(@Param("roomId") Long roomId,
                                                  @Param("checkIn") LocalDate checkIn,
                                                  @Param("checkOut") LocalDate checkOut);

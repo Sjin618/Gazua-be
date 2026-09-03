@@ -2,9 +2,11 @@ package com.acc.gazua.domain.reservation.dto;
 
 
 import com.acc.gazua.domain.accommodation.entity.CheckDate;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 public record ReservationInitRequest(
-        CheckDate checkDate,
-        Long roomId
+        @NotNull @Valid CheckDate checkDate,
+        @NotNull Long roomId
 ) {
 }

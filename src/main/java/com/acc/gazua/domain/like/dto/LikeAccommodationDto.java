@@ -6,7 +6,8 @@ import java.math.BigDecimal;
 
 public interface LikeAccommodationDto {
 
-    Long getId();
+    Long getLikeId();
+    Long getAccommodationId();
     String getName();
     BigDecimal getAverageStar();
     Long getReviewCount();

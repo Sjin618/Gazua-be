@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Getter
@@ -11,8 +12,8 @@ import java.time.LocalDateTime;
 public abstract class BaseEntity extends BaseTimeEntity{
     private LocalDateTime deletedAt;
 
-    public void delete(){
-        this.deletedAt = LocalDateTime.now();
+    public void delete(LocalDateTime now){
+        this.deletedAt = now;
     }
 
     public boolean isDeleted(){

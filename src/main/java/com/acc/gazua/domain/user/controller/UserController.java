@@ -2,7 +2,7 @@ package com.acc.gazua.domain.user.controller;
 
 
 import com.acc.gazua.domain.like.dto.LikeAccommodationDto;
-import com.acc.gazua.domain.like.service.LikeServiceImpl;
+import com.acc.gazua.domain.like.service.LikeService;
 import com.acc.gazua.domain.user.dto.UserSignUpRequest;
 import com.acc.gazua.domain.user.service.UserServiceImpl;
 import com.acc.gazua.global.dto.ApiResponse;
@@ -10,6 +10,8 @@ import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -23,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserServiceImpl userServiceImpl;
-    private final LikeServiceImpl likeService;
+    private final LikeService likeService;
 
     //회원 가입
     @PostMapping("/signup")
@@ -57,8 +59,8 @@ public class UserController {
     @GetMapping("/me/likes")
     public ResponseEntity<ApiResponse<CursorPage<LikeAccommodationDto>>> getLikesAccommodation(@AuthenticationPrincipal CustomUserDetails user,
                                                                                                @RequestParam(required = false) String cursor,
-                                                                                               @RequestParam(defaultValue = "10") int size){
-        return ResponseEntity.ok(ApiResponse.success(likeService.getLikeAccommodation(user, cursor, size),
+                                                                                               @Min(1) @Max(20) @RequestParam(defaultValue = "10") int size){
+        return ResponseEntity.ok(ApiResponse.success(likeService.getLikeAccommodation(user.getUserId(), cursor, size),
                 "좋아요 숙소 조회에 성공하였습니다."));
     }
 

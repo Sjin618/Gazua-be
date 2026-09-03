@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,6 +26,7 @@ public class AuthServiceRDBImpl implements AuthService{
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final Clock clock;
 
     //유저 로그인
     public TokenDto login(LoginRequest loginRequest) {
@@ -69,7 +72,7 @@ public class AuthServiceRDBImpl implements AuthService{
         RefreshToken oldToken = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new JwtCustomException(ErrorCode.INVALID_TOKEN));
 
-        if(oldToken.isExpired()){
+        if(oldToken.isExpired(clock)){
             throw new JwtCustomException(ErrorCode.EXPIRED_TOKEN);
         }
 

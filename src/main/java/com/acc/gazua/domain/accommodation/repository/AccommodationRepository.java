@@ -20,7 +20,7 @@ public interface AccommodationRepository extends JpaRepository<Accommodation,Lon
             "                         THEN (a.totalStar + :deltaStar) / (a.reviewCount + :deltaCount)" +
             "                         ELSE 0 END " +
             "WHERE a.id = :accId AND a.reviewCount + :deltaCount >= 0")
-    void updateStats(@Param("accId") Long accId, @Param("deltaCount") Long deltaCount, @Param("deltaStar") BigDecimal deltaStar);
+    int updateStats(@Param("accId") Long accId, @Param("deltaCount") Long deltaCount, @Param("deltaStar") BigDecimal deltaStar);
 
 
 

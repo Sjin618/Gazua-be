@@ -1,6 +1,7 @@
 package com.acc.gazua.global.portone;
 
 import com.acc.gazua.global.portone.exception.PortOnePaymentNotFoundException;
+import com.acc.gazua.global.portone.exception.PortOneRequestException;
 import com.acc.gazua.global.portone.exception.PortOneUnavailableException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.RequiredArgsConstructor;
@@ -37,36 +38,6 @@ public class PortOneClient {
         return headers;
     }
 
-    //portOne 결제 단건 조회
-    public PortOnePaymentInfo getPaymentAmount(String paymentId){
-        HttpEntity<Void> entity = new HttpEntity<>(getHeader());
-
-        try {
-            ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
-                    PAYMENT_INFO_URL,
-                    HttpMethod.GET,
-                    entity,
-                    PortOnePaymentResponse.class,
-                    paymentId
-            );
-            PortOnePaymentResponse payment = response.getBody();
-            if (payment == null) {
-                throw new IllegalStateException("포트원에서 결제 정보를 찾을 수 없습니다.");
-            }
-
-            if (!"PAID".equals(payment.status())) {
-                throw new IllegalStateException("결제가 완료되지 않은 상태입니다: " + payment.status());
-            }
-
-            return new PortOnePaymentInfo(payment.amount().total(), payment.id());
-        } catch (HttpClientErrorException.NotFound e) {
-            throw new IllegalStateException("포트원에서 결제 정보를 찾을 수 없습니다.", e);
-        } catch (HttpClientErrorException e) {
-            //throw new PortOneRefundException(e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException();
-        }
-    }
-
     public PortOnePaymentSnapshot getPayment(String paymentId){
         try {
             ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
@@ -99,7 +70,7 @@ public class PortOneClient {
             // 4xx — 우리 요청이 잘못됨 (시크릿 오류 등). 재시도 무의미, 즉시 인지해야 함
             log.error("포트원 요청 오류 - paymentId={}, status={}, body={}",
                     paymentId, e.getStatusCode(), e.getResponseBodyAsString());
-            throw new IllegalStateException("포트원 요청 오류", e);
+            throw new PortOneRequestException("포트원 요청 오류", e);
         }catch(HttpServerErrorException | ResourceAccessException e){
             // 5xx / 타임아웃 / 커넥션 실패 — 재시도 가능
             throw new PortOneUnavailableException("포트원 응답 실패: " + paymentId, e);
@@ -122,10 +93,12 @@ public class PortOneClient {
             //이미 취소된 결제 - 멱등 처리, 이후 syncPayment가 상태를 맞춘다
             log.info("이미 취소된 결제 - paymentId={}", paymentId);
         }catch(HttpClientErrorException e){
+            // 4xx — 우리 요청이 잘못됨 (시크릿 오류 등). 재시도 무의미, 즉시 인지해야 함
             log.error("포트원 취소 요청 오류 - paymentId={}, status={}, body={}",
                     paymentId, e.getStatusCode(), e.getResponseBodyAsString());
-            throw new IllegalStateException("포트원 취소 요청 오류", e);
+            throw new PortOneRequestException("포트원 취소 요청 오류", e);
         }catch(HttpServerErrorException | ResourceAccessException e){
+            // 5xx / 타임아웃 / 커넥션 실패 — 재시도 가능
             throw new PortOneUnavailableException("포트원 취소 응답 실패: " + paymentId, e);
         }
     }

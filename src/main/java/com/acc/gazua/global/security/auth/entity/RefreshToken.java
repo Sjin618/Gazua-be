@@ -6,6 +6,7 @@ import com.acc.gazua.global.security.provider.dto.TokenDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Getter
@@ -34,8 +35,8 @@ public class RefreshToken extends BaseTimeEntity {
     }
 
     //만료 기한이 현재 시간보다 이전이면 만료된 토큰
-    public boolean isExpired(){
-        return this.expiredAt.isBefore(LocalDateTime.now());
+    public boolean isExpired(Clock clock){
+        return this.expiredAt.isBefore(LocalDateTime.now(clock));
     }
 
 }

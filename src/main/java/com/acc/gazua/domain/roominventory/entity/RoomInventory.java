@@ -10,6 +10,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@Table(name = "room_inventory",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_room_inventory_room_date",
+                columnNames = {"room_id", "date"}))
 @Entity
 public class RoomInventory {
     @Id

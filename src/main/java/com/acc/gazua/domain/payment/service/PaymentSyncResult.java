@@ -8,6 +8,7 @@ public enum PaymentSyncResult {
     NOT_PAID_YET,               // 아직 미확정 (결제창 미완료, 가상계좌 입금대기 등)
     AMOUNT_MISMATCH,            // 위변조 의심 → 환불 처리됨
     UNKNOWN_PAYMENT,            // 우리 DB에 없는 paymentId
-    PARTIAL_CANCEL_UNSUPPORTED, // 부분취소 — 수동 확인 필요
-    PORTONE_UNAVAILABLE         // PortOne 장애/타임아웃 → 재시도 대상
+    PORTONE_UNAVAILABLE,        // PortOne 장애/타임아웃 → 재시도 대상
+    RESERVATION_EXPIRED,        // 만료 처리된 예약 -> 자동 환불 처리
+    MANUAL_REVIEW_REQUIRED      // 우리 서버에서 PortOne 으로의 요청 실패, 확인이 필요한 요청
 }

@@ -4,9 +4,10 @@ public enum ReservationStatus {
     PENDING, //결제 전
     CONFIRM, //결제 완료
     CANCELLED, //환불 or 기타 취소
-    COMPLETED; // 체크아웃 완료
+    COMPLETED, // 체크아웃 완료
+    EXPIRED; //가예약 만료
 
     public boolean isListable() {
-        return this != PENDING;
+        return this != PENDING && this != EXPIRED;
     }
 }

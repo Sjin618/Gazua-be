@@ -19,11 +19,11 @@ public class Like {
     @Column(name = "likes_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user; //좋아요를 누른 사용자 ID
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accommodation_id")
     private Accommodation accommodation; //좋아요 한 숙소 ID
 }

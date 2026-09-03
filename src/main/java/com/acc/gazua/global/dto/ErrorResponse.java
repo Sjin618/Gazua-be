@@ -12,8 +12,8 @@ import java.util.List;
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-    private String code;
-    private String message;
+    private final String code;
+    private final String message;
     private List<FieldError> errors;
 
     private ErrorResponse(String code,String message){
