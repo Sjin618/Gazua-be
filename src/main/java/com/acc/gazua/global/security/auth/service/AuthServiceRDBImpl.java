@@ -67,7 +67,7 @@ public class AuthServiceRDBImpl implements AuthService{
             throw new JwtCustomException(ErrorCode.EMPTY_TOKEN);
         }
         //refresh token 검증
-        jwtProvider.validateToken(refreshToken);
+        jwtProvider.parseClaims(refreshToken);
 
         RefreshToken oldToken = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new JwtCustomException(ErrorCode.INVALID_TOKEN));
@@ -78,6 +78,11 @@ public class AuthServiceRDBImpl implements AuthService{
 
         User user = userRepository.findById(oldToken.getUserId())
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        if(user.isDeleted()){
+            throw new UserException(ErrorCode.DELETED_USER);
+        }
+
         //refresh token 재발급
         //access token 재발급
         TokenDto tokenDto = jwtProvider.createTokenDto(user.getId(), user.getRole().getKey());

@@ -4,15 +4,13 @@ import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.security.auth.dto.LoginRequest;
 import com.acc.gazua.global.security.auth.dto.LoginResponse;
 import com.acc.gazua.global.security.auth.service.AuthServiceRDBImpl;
-import com.acc.gazua.global.security.details.CustomUserDetails;
+import com.acc.gazua.global.security.cookie.CookieUtils;
 import com.acc.gazua.global.security.provider.dto.TokenDto;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,7 +25,7 @@ public class AuthController {
                                                    HttpServletResponse response){
         TokenDto tokenDto = authServiceRDBImpl.login(loginRequest);
 
-        ResponseCookie cookie = makeCookie("refreshToken",
+        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken",
                 tokenDto.getRefreshToken(),
                 tokenDto.getRefreshTokenExpirationTime() / 1000);
 
@@ -48,7 +46,7 @@ public class AuthController {
             authServiceRDBImpl.logout(refreshToken);
         }
         //refresh token 유효기간 0으로 설정해서 제거
-        ResponseCookie cookie = makeCookie("refreshToken","",0);
+        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken","",0);
 
         response.addHeader("Set-Cookie", cookie.toString());
 
@@ -60,8 +58,7 @@ public class AuthController {
                                                               @CookieValue(value = "refreshToken", required = false) String refreshToken) {
         TokenDto tokenDto = authServiceRDBImpl.reissue(refreshToken);
 
-        ResponseCookie cookie = makeCookie("refreshToken",
-                tokenDto.getRefreshToken(),
+        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken", tokenDto.getRefreshToken(),
                 tokenDto.getRefreshTokenExpirationTime() / 1000);
 
         response.addHeader("Set-Cookie", cookie.toString());
@@ -71,12 +68,4 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(loginResponse, "reIssue 완료"));
     }
 
-    private ResponseCookie makeCookie(String cookieName, String cookieValue, long maxAge) {
-        return ResponseCookie.from(cookieName, cookieValue)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(maxAge)
-                .build();
-    }
 }

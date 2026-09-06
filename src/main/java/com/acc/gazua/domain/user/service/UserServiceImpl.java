@@ -11,8 +11,9 @@ import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.security.auth.repository.RefreshTokenRepository;
-import com.acc.gazua.global.security.details.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +30,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final Clock clock;
+
+    @Override
     public void signup(UserSignUpRequest request){
         //이메일 중복 체크
         if(userRepository.existsByEmail(request.email())){
@@ -49,35 +53,50 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         //회원 저장
-        userRepository.save(user);
+        //회원가입 중복 실행 시 에러 메시지 일관되게 반환
+        //나중에 user에 unique 제약이 추가되면, 에러를 필드에 따라 상세하게 분리해야 함
+        try {
+            userRepository.save(user);
+        }catch(DataIntegrityViolationException e){
+            log.warn("회원가입 중복실행 감지");
+            throw new UserException(ErrorCode.DUPLICATE_EMAIL);
+        }
     }
 
-    public void withdraw(CustomUserDetails userDetails){
-        Long userId = userDetails.getUserId();
+    @Override
+    public void withdraw(Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        if(user.isDeleted()){
+            throw new UserException(ErrorCode.DELETED_USER);
+        }
+
         user.delete(LocalDateTime.now(clock));
         //유저와 관련된 모든 refresh token DB에서 삭제
         refreshTokenRepository.deleteByUserId(userId);
     }
 
+    @Override
     @Transactional(readOnly = true)
-    public UserSummaryResponse getMySummary(CustomUserDetails userDetails){
-        User user = userRepository.findById(userDetails.getUserId())
+    public UserSummaryResponse getMySummary(Long userId){
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
         return UserSummaryResponse.from(user);
     }
 
+    @Override
     @Transactional(readOnly = true)
-    public UserDetailResponse getMyDetail(CustomUserDetails userDetails){
-        User user = userRepository.findById(userDetails.getUserId())
+    public UserDetailResponse getMyDetail(Long userId){
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
         return UserDetailResponse.from(user);
     }
 
-    public void updateMe(UserUpdateRequest userUpdateRequest,CustomUserDetails userDetails){
+    @Override
+    public void updateMe(UserUpdateRequest userUpdateRequest,Long userId){
 
     }
 

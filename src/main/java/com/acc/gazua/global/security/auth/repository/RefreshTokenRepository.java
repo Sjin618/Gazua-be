@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long> {
 
+    @Modifying
     @Query("DELETE FROM RefreshToken r where r.userId = :userId")
     void deleteByUserId(Long userId);
 

@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @Getter
 public class Reservation extends BaseTimeEntity {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reservation_id")
     private Long id; //예약 번호
 

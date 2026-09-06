@@ -15,7 +15,7 @@ import lombok.*;
         columnNames = {"accommodation_id","user_id"}
 ))
 public class Like {
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "likes_id")
     private Long id;
 

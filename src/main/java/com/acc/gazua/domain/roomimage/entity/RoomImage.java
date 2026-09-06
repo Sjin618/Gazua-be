@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 @Getter
 public class RoomImage {
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id")
     private Long id;
 

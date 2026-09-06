@@ -24,7 +24,7 @@ public enum ErrorCode {
 
     //유저 관련 에러
     LOGIN_FAILED(400,"U001","아이디 또는 비밀번호가 일치하지 않습니다."),
-    DUPLICATE_EMAIL(400,"U002","이미 존재하는 이메일입니다."),
+    DUPLICATE_EMAIL(409,"U002","이미 존재하는 이메일입니다."),
     DELETED_USER(400,"U003","탈퇴한 계정입니다."),
     USER_NOT_FOUND(404,"U004","존재하지 않는 회원입니다."),
 

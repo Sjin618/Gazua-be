@@ -4,9 +4,10 @@ package com.acc.gazua.domain.user.controller;
 import com.acc.gazua.domain.like.dto.LikeAccommodationDto;
 import com.acc.gazua.domain.like.service.LikeService;
 import com.acc.gazua.domain.user.dto.UserSignUpRequest;
-import com.acc.gazua.domain.user.service.UserServiceImpl;
+import com.acc.gazua.domain.user.service.UserService;
 import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.dto.CursorPage;
+import com.acc.gazua.global.security.cookie.CookieUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -24,13 +25,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userService;
     private final LikeService likeService;
 
     //회원 가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody UserSignUpRequest request) {
-        userServiceImpl.signup(request);
+        userService.signup(request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("회원가입이 완료되었습니다."));
@@ -40,15 +41,9 @@ public class UserController {
     @DeleteMapping("/withdraw")
     public ResponseEntity<ApiResponse<Void>> withdraw(HttpServletResponse response,
             @AuthenticationPrincipal CustomUserDetails user){
-        userServiceImpl.withdraw(user);
+        userService.withdraw(user.getUserId());
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken","")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(0)
-                .build();
+        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken","",0);
 
         response.addHeader("Set-Cookie",cookie.toString());
 

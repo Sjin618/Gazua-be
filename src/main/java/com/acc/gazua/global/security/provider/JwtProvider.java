@@ -60,6 +60,7 @@ public class JwtProvider {
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(userId))
                 .add("role", role)
+                .add("type","access")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpirationTime))
                 .build();
@@ -73,6 +74,7 @@ public class JwtProvider {
         Date expiredDate = new Date(System.currentTimeMillis() + refreshExpirationTime);
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(userId))
+                .add("type","refresh")
                 .issuedAt(new Date())
                 .expiration(expiredDate)
                 .build();
@@ -84,37 +86,39 @@ public class JwtProvider {
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime());
     }
+    
 
-
-    //토큰 검증
-    public boolean validateToken(String token){
+    public Claims parseClaims(String token){
         try{
-            Jwts.parser()
+            return Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
-                    .parseSignedClaims(token);
-            return true;
-        }catch(SecurityException | MalformedJwtException e){
+                    .parseSignedClaims(token)
+                    .getPayload();
+        }catch (SecurityException | MalformedJwtException e){
             throw new JwtCustomException(ErrorCode.INVALID_TOKEN);
-        }catch(ExpiredJwtException e){
+        }catch (ExpiredJwtException e){
             throw new JwtCustomException(ErrorCode.EXPIRED_TOKEN);
-        }catch(UnsupportedJwtException e){
+        }catch (UnsupportedJwtException e){
             throw new JwtCustomException(ErrorCode.UNSUPPORTED_TOKEN);
-        }catch(IllegalArgumentException e){
+        }catch (IllegalArgumentException e){
             throw new JwtCustomException(ErrorCode.EMPTY_TOKEN);
         }
+
     }
 
     public Authentication getAuthentication(String token) {
         //토큰 복호화 및 Claims 추출
-        Claims claims = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims = parseClaims(token);
+
+        //type이 access 인 토큰만 통과 가능
+        if(!"access".equals(claims.get("type", String.class))) {
+            throw new JwtCustomException(ErrorCode.INVALID_TOKEN);
+        }
 
         //Claims 에서 데이터 추출
         Long userId = Long.parseLong(claims.getSubject());
+        log.debug("인증 완료 userId={}",userId);
         String role = claims.get("role", String.class);
 
         //권한 객체 생성

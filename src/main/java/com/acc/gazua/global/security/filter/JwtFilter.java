@@ -40,14 +40,13 @@ public class JwtFilter extends OncePerRequestFilter {
             //token 추출
             String accessToken = resolveToken(request);
             //token 검증
-            if (StringUtils.hasText(accessToken) && jwtProvider.validateToken(accessToken)) {
+            if (StringUtils.hasText(accessToken)) {
                 Authentication authentication = jwtProvider.getAuthentication(accessToken);
                 SecurityContextHolder
                         .getContextHolderStrategy()
                         .getContext()
                         .setAuthentication(authentication);
             }
-            log.info("필터 통과 accessToken: {}",accessToken);
             filterChain.doFilter(request, response);
         }catch(JwtCustomException e){
             JwtErrorHandler.sendErrorResponse(response, e.getErrorCode());
