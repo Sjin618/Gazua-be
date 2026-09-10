@@ -8,7 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,11 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
-    private JwtProvider jwtProvider;
+    public static final String TOKEN_ERROR = "jwtTokenError";
+    private final JwtProvider jwtProvider;
 
     //요청에서 jwt 토큰을 가지고 옴
     //jwt 토큰의 만료일,유효성 검증 (JwtProvider)
@@ -29,31 +30,27 @@ public class JwtFilter extends OncePerRequestFilter {
     //반환된 Authentication은 SecurityContextHolder에 저장
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String accessToken = resolveToken(request);
 
-        String requestURI = request.getRequestURI();
-        if(requestURI.equals("/api/auth/re-issue")){
-            filterChain.doFilter(request,response);
-            return;
-        }
-
-        try{
-            //token 추출
-            String accessToken = resolveToken(request);
-            //token 검증
-            if (StringUtils.hasText(accessToken)) {
+        if(StringUtils.hasText(accessToken)){
+            try{
                 Authentication authentication = jwtProvider.getAuthentication(accessToken);
                 SecurityContextHolder
                         .getContextHolderStrategy()
                         .getContext()
                         .setAuthentication(authentication);
+            }catch(JwtCustomException e){
+                // 여기서 응답을 끊지 않는다.
+                // 보호된 경로면 AuthorizationFilter 가 막고 EntryPoint 가 401 을 낸다.
+                SecurityContextHolder.getContextHolderStrategy().clearContext();
+                request.setAttribute(TOKEN_ERROR,e.getErrorCode()); //사유만 전달
+            }catch(Exception e){
+                log.error("토큰 처리 중 예상치 못한 오류", e);
+                JwtErrorHandler.sendErrorResponse(response,ErrorCode.INTERNAL_SERVER_ERROR);
+                return;
             }
-            filterChain.doFilter(request, response);
-        }catch(JwtCustomException e){
-            JwtErrorHandler.sendErrorResponse(response, e.getErrorCode());
-        }catch(Exception e){
-            JwtErrorHandler.sendErrorResponse(response,ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
+        filterChain.doFilter(request, response);
     }
 
     private String resolveToken(HttpServletRequest request){

@@ -37,7 +37,7 @@ public class AccommodationController {
     }
 
     //숙소 등록
-    @PreAuthorize("admin")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> registerAccommodation(@RequestBody AccommodationRegisterRequest registerRequest){
         accommodationService.registerAccommodation(registerRequest);

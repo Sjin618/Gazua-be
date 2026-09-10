@@ -9,7 +9,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,15 +19,14 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class JwtProvider {
 
     @Value("${JWT_SECRET}")
@@ -42,12 +40,22 @@ public class JwtProvider {
 
     private SecretKey secretKey;
 
+    //HS256 최소 키 길이 (256bit)
+    private static final int MIN_SECRET_BYTES = 32;
+
     public static final String GRANT_TYPE = "Bearer";
 
     @PostConstruct
     protected void init(){
+        byte[] keyBytes = salt.getBytes(StandardCharsets.UTF_8);
+
+        if(keyBytes.length < MIN_SECRET_BYTES){
+            throw new IllegalStateException("JWT_SECRET 은 최소 %d바이트여야 합니다. 현재 %d바이트입니다. 'openssl rand -base64 48' 로 재발급하세요."
+                    .formatted(MIN_SECRET_BYTES, keyBytes.length));
+        }
+
         // 설정된 salt 값을 바탕으로 HMAC-SHA 알고리즘에 적합한 SecretKey 생성
-        this.secretKey = Keys.hmacShaKeyFor(salt.getBytes(StandardCharsets.UTF_8));
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public TokenDto createTokenDto(Long userId,String role){
@@ -59,6 +67,7 @@ public class JwtProvider {
     public String createAccessToken(Long userId,String role){
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(userId))
+                .id(UUID.randomUUID().toString())
                 .add("role", role)
                 .add("type","access")
                 .issuedAt(new Date())
@@ -74,6 +83,7 @@ public class JwtProvider {
         Date expiredDate = new Date(System.currentTimeMillis() + refreshExpirationTime);
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(userId))
+                .id(UUID.randomUUID().toString())
                 .add("type","refresh")
                 .issuedAt(new Date())
                 .expiration(expiredDate)
@@ -92,6 +102,7 @@ public class JwtProvider {
         try{
             return Jwts.parser()
                     .verifyWith(secretKey)
+                    .clockSkewSeconds(30)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
@@ -120,6 +131,11 @@ public class JwtProvider {
         Long userId = Long.parseLong(claims.getSubject());
         log.debug("인증 완료 userId={}",userId);
         String role = claims.get("role", String.class);
+
+        //역할이 없으면 유효하지 않은 토큰
+        if(role == null){
+            throw new JwtCustomException(ErrorCode.INVALID_TOKEN);
+        }
 
         //권한 객체 생성
         Collection<? extends GrantedAuthority> authorities =

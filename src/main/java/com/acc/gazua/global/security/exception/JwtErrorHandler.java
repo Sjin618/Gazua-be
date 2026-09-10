@@ -9,13 +9,14 @@ import java.io.IOException;
 
 public class JwtErrorHandler {
 
+    private final static ObjectMapper objectMapper = new ObjectMapper();
+
     public static void sendErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
         response.setStatus(errorCode.getStatus());
         response.setContentType("application/json;charset=UTF-8");
 
         ErrorResponse errorResponse = ErrorResponse.of(errorCode);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         String json = objectMapper.writeValueAsString(errorResponse);
 
         response.getWriter().write(json);

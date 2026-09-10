@@ -7,7 +7,7 @@ import com.acc.gazua.domain.user.dto.UserSignUpRequest;
 import com.acc.gazua.domain.user.service.UserService;
 import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.dto.CursorPage;
-import com.acc.gazua.global.security.cookie.CookieUtils;
+import com.acc.gazua.global.security.util.CookieUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -27,6 +27,7 @@ public class UserController {
 
     private final UserService userService;
     private final LikeService likeService;
+    private final CookieUtils cookieUtils;
 
     //회원 가입
     @PostMapping("/signup")
@@ -43,7 +44,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails user){
         userService.withdraw(user.getUserId());
 
-        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken","",0);
+        ResponseCookie cookie = cookieUtils.makeCookie("refreshToken","",0);
 
         response.addHeader("Set-Cookie",cookie.toString());
 

@@ -20,6 +20,10 @@ spring:
   #sql:
    # init:
     #  mode: always
-tour:
-  api:
-    key: {SERVICE_KEY:123}
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+  cookie:
+    secure: false
+    same-site: Lax

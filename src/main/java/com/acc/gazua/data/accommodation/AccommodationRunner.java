@@ -17,6 +17,7 @@ import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalTime;
@@ -28,6 +29,7 @@ import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.data-init.enabled", havingValue = "true", matchIfMissing = true)
 public class AccommodationRunner implements CommandLineRunner {
 
     private final SearchStayList searchStayList;

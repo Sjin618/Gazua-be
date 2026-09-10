@@ -10,3 +10,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
+app:
+  cors:
+    allowed-origins: https://gazua.com # 임시
+  cookie:
+    secure: true
+    same-site: Lax

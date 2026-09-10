@@ -3,8 +3,8 @@ package com.acc.gazua.global.security.auth.controller;
 import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.security.auth.dto.LoginRequest;
 import com.acc.gazua.global.security.auth.dto.LoginResponse;
-import com.acc.gazua.global.security.auth.service.AuthServiceRDBImpl;
-import com.acc.gazua.global.security.cookie.CookieUtils;
+import com.acc.gazua.global.security.auth.service.AuthService;
+import com.acc.gazua.global.security.util.CookieUtils;
 import com.acc.gazua.global.security.provider.dto.TokenDto;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -18,14 +18,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthServiceRDBImpl authServiceRDBImpl;
+    private final AuthService authService;
+    private final CookieUtils cookieUtils;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest,
                                                    HttpServletResponse response){
-        TokenDto tokenDto = authServiceRDBImpl.login(loginRequest);
+        TokenDto tokenDto = authService.login(loginRequest);
 
-        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken",
+        ResponseCookie cookie = cookieUtils.makeCookie("refreshToken",
                 tokenDto.getRefreshToken(),
                 tokenDto.getRefreshTokenExpirationTime() / 1000);
 
@@ -43,10 +44,10 @@ public class AuthController {
         //refresh token이 있는 경우에만 제거
         //없는 경우는 refresh token을 만료 처리만 한다.
         if(refreshToken != null) {
-            authServiceRDBImpl.logout(refreshToken);
+            authService.logout(refreshToken);
         }
         //refresh token 유효기간 0으로 설정해서 제거
-        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken","",0);
+        ResponseCookie cookie = cookieUtils.makeCookie("refreshToken","",0);
 
         response.addHeader("Set-Cookie", cookie.toString());
 
@@ -56,9 +57,9 @@ public class AuthController {
     @PostMapping("/re-issue")
     public ResponseEntity<ApiResponse<LoginResponse>> reissue(HttpServletResponse response,
                                                               @CookieValue(value = "refreshToken", required = false) String refreshToken) {
-        TokenDto tokenDto = authServiceRDBImpl.reissue(refreshToken);
+        TokenDto tokenDto = authService.reissue(refreshToken);
 
-        ResponseCookie cookie = CookieUtils.makeCookie("refreshToken", tokenDto.getRefreshToken(),
+        ResponseCookie cookie = cookieUtils.makeCookie("refreshToken", tokenDto.getRefreshToken(),
                 tokenDto.getRefreshTokenExpirationTime() / 1000);
 
         response.addHeader("Set-Cookie", cookie.toString());
