@@ -46,11 +46,11 @@ public class UserController {
     @DeleteMapping("/withdraw")
     public ResponseEntity<ApiResponse<Void>> withdraw(HttpServletResponse response,
             @AuthenticationPrincipal CustomUserDetails user){
+        ResponseCookie cookie = cookieUtils.makeCookie("refreshToken","",0);
+        response.addHeader("Set-Cookie",cookie.toString());
+
         userService.withdraw(user.getUserId());
 
-        ResponseCookie cookie = cookieUtils.makeCookie("refreshToken","",0);
-
-        response.addHeader("Set-Cookie",cookie.toString());
 
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
     }

@@ -10,7 +10,9 @@ import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.exception.FileException;
 import com.acc.gazua.global.security.auth.repository.RefreshTokenRepository;
+import com.acc.gazua.global.validation.ImageValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +33,11 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ImageValidator imageValidator;
     private final Clock clock;
 
     @Value("${app.user.default-profile-image}")
-    private final String DEFAULT_PROFILE_IMAGE;
+    private final String defaultProfileImage;
 
     @Override
     public void signup(UserSignUpRequest request){
@@ -48,7 +51,7 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .email(request.email())
                 .password(encodedPassword)
-                .profileImage(null) //기본 이미지로 수정
+                .profileImage(null) //null 은 기본 이미지
                 .gender(request.gender())
                 .nickname(request.nickname())
                 .role(Role.USER)
@@ -82,7 +85,7 @@ public class UserServiceImpl implements UserService {
     public UserSummaryResponse getMySummary(Long userId){
         User user = findActiveUser(userId);
 
-        return UserSummaryResponse.from(user, DEFAULT_PROFILE_IMAGE);
+        return UserSummaryResponse.from(user, defaultProfileImage);
     }
 
     @Override
@@ -90,7 +93,7 @@ public class UserServiceImpl implements UserService {
     public UserDetailResponse getMyDetail(Long userId){
         User user = findActiveUser(userId);
 
-        return UserDetailResponse.from(user, DEFAULT_PROFILE_IMAGE);
+        return UserDetailResponse.from(user, defaultProfileImage);
     }
 
     @Override
@@ -105,20 +108,26 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    /**
+     * polyglot 파일이 통과하는건 매직 바이트 검증 방식의 한계
+     * PNG 서명 뒤에 붙은 HTML이나 파일이 통과할 수 있음
+     * 저장소를 구현할 때 UUID 파일명과 nosniff 헤더로 막기
+     * @param newImage
+     * @param userId
+     */
     @Override
     public void updateMyProfileImage(MultipartFile newImage, Long userId) {
         User user = findActiveUser(userId);
-
-        if (newImage == null || newImage.isEmpty()) {
-            throw new UserException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        String detectedType = imageValidator.validate(newImage);
 
         String oldImageUrl = user.getProfileImage();
         // 이미지 저장소에 새 이미지 저장
-        //String newProfileImageUrl = 파일저장소.save(newProfileImage, userId);
-        //user.changeProfileImage(newProfileImageUrl);
+        //String newImageUrl = fileStorage.save(newImage, detectedType, userId);
+        //user.changeProfileImage(newImageUrl);
 
         //deleteAfterCommit(oldImageUrl); //null 이면 지울게 없음
+
+        throw new FileException(ErrorCode.NOT_IMPLEMENTED); // 저장소 확정 후 제거
     }
 
     @Override

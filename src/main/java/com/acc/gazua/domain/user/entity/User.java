@@ -24,7 +24,6 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
     private String profileImage; //회원가입 시 기본 이미지 사용, 정보 수정에서 이미지 설정
 
     @Column(nullable = false)

@@ -22,6 +22,9 @@ public enum ErrorCode {
     INVALID_CURSOR(400,"C012","잘못된 형식의 커서입니다."),
     INVALID_SORT_TYPE(400,"C013","잘못된 정렬 형식입니다,"),
 
+    NOT_IMPLEMENTED(501,"C014","아직 제공하지 않는 기능입니다."),
+
+
     //유저 관련 에러
     LOGIN_FAILED(400,"U001","아이디 또는 비밀번호가 일치하지 않습니다."),
     DUPLICATE_EMAIL(409,"U002","이미 존재하는 이메일입니다."),
@@ -71,7 +74,14 @@ public enum ErrorCode {
     EXPIRED_TOKEN(401,"J002","만료된 토큰입니다. 다시 로그인하거나 갱신해주세요."),
     UNSUPPORTED_TOKEN(401,"J003","지원되지 않는 토큰 형식입니다."),
     EMPTY_TOKEN(401,"J004","토큰이 존재하지 않습니다."),
-    TOKEN_REUSE_DETECTED(401,"J005","비정상적인 접근이 감지되어 로그아웃되었습니다. 다시 로그인해주세요.");
+    TOKEN_REUSE_DETECTED(401,"J005","비정상적인 접근이 감지되어 로그아웃되었습니다. 다시 로그인해주세요."),
+
+    //파일 관련 에러
+    FILE_TOO_LARGE(413,"F001","파일이 용량을 초과했습니다."),
+    EMPTY_FILE(400,"F002","파일이 비어 있습니다."),
+    INVALID_IMAGE_TYPE(415,"F003","JPG, PNG, WEBP 형식의 이미지만 업로드할 수 있습니다.");
+
+
 
     private final int status;
     private final String code;

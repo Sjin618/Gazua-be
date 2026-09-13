@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.ErrorResponseException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.ArrayList;
@@ -115,6 +117,7 @@ public class GlobalExceptionHandler {
         return toResponse(ErrorCode.TYPE_MISMATCH, errors);
     }
 
+    // 필수 파라미터 누락
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException e,
                                                                 HttpServletRequest request) {
@@ -122,6 +125,22 @@ public class GlobalExceptionHandler {
                 new ErrorResponse.FieldError(e.getParameterName(), "", "필수 파라미터입니다."));
         log.warn("필수 파라미터 누락 - {} {} : {}", request.getMethod(), request.getRequestURI(), e.getParameterName());
         return toResponse(ErrorCode.MISSING_PARAMETER, errors);
+    }
+
+    //필수 파라미터 Part 누락 (RequestPart)
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(MissingServletRequestPartException e,
+                                                           HttpServletRequest request) {
+        log.warn("필수 파트 누락 - {} {} : {}", request.getMethod(), request.getRequestURI(), e.getRequestPartName());
+        return toResponse(ErrorCode.MISSING_PARAMETER);
+    }
+
+    // 설정된 업로드 용량 초과
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException e,
+                                                             HttpServletRequest request) {
+        log.warn("업로드 용량 초과 - {} {}", request.getMethod(), request.getRequestURI());
+        return toResponse(ErrorCode.FILE_TOO_LARGE);
     }
 
     // 본문이 없거나 JSON 형식이 잘못된 경우
