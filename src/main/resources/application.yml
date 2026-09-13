@@ -8,3 +8,7 @@ spring:
     multipart:
       max-file-size: 5MB #파일 하나의 최대 크기
       max-request-size: 10MB #multipart 요청 하나의 최대 크기
+
+app:
+  user:
+    default-profile-image: "https://cdn.example.com" # 임시 경로

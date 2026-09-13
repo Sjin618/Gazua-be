@@ -13,14 +13,15 @@ public record UserDetailResponse(
         Gender gender,
         LocalDate birthDate
 ) {
-    public static UserDetailResponse from(User user){
+    public static UserDetailResponse from(User user, String defaultProfileImage) {
         return new UserDetailResponse(
                 user.getNickname(),
-                user.getProfileImage(),
+                user.getProfileImage() != null ? user.getProfileImage() : defaultProfileImage,
                 user.getName(),
                 user.getPhoneNumber(),
                 user.getGender(),
                 user.getBirthDate()
         );
     }
+
 }

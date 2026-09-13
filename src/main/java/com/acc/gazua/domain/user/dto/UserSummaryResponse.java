@@ -4,12 +4,13 @@ import com.acc.gazua.domain.user.entity.User;
 
 public record UserSummaryResponse(
         String profileImage,
-        String name
+        String nickname
 ) {
-    public static UserSummaryResponse from(User user){
+    public static UserSummaryResponse from(User user, String defaultProfileImage) {
         return new UserSummaryResponse(
-                user.getProfileImage(),
-                user.getName()
+                user.getProfileImage() != null ? user.getProfileImage() : defaultProfileImage,
+                user.getNickname()
         );
     }
+
 }

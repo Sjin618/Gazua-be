@@ -21,10 +21,13 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email; //ID 로 사용, 중복 불가능
 
+    @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
     private String profileImage; //회원가입 시 기본 이미지 사용, 정보 수정에서 이미지 설정
 
+    @Column(nullable = false)
     private String nickname; //닉네임 중복 가능
 
     @Enumerated(EnumType.STRING)
@@ -46,5 +49,29 @@ public class User extends BaseEntity {
 
     public boolean equalsId(Long requestId){
         return Objects.equals(this.id, requestId);
+    }
+
+    public void changeName(String name){
+        this.name = name;
+    }
+
+    public void changeNickname(String nickname){
+        this.nickname = nickname;
+    }
+
+    public void changePhoneNumber(String phoneNumber){
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void changeBirthDate(LocalDate birthDate){
+        this.birthDate = birthDate;
+    }
+
+    public void changeGender(Gender gender){
+        this.gender = gender;
+    }
+
+    public void changeProfileImage(String profileImage) {
+        this.profileImage = profileImage;
     }
 }

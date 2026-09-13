@@ -5,6 +5,8 @@ spring:
 app:
   data-init:
     enabled: false
+  user:
+    default-profile-image: "https://cdn.example.com" # 임시 경로
 
 
 JWT_SECRET: this-is-a-dummy-secret-key-for-test-1234567890

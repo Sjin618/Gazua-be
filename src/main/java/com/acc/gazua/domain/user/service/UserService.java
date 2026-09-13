@@ -4,6 +4,7 @@ import com.acc.gazua.domain.user.dto.UserDetailResponse;
 import com.acc.gazua.domain.user.dto.UserSignUpRequest;
 import com.acc.gazua.domain.user.dto.UserSummaryResponse;
 import com.acc.gazua.domain.user.dto.UserUpdateRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     //회원가입
@@ -19,4 +20,8 @@ public interface UserService {
 
     //내 정보 수정
     void updateMe(UserUpdateRequest userUpdateRequest, Long userId);
+
+    void updateMyProfileImage(MultipartFile newImage, Long userId);
+
+    void deleteMyProfileImage(Long userId);
 }

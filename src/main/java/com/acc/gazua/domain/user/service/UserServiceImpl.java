@@ -13,10 +13,12 @@ import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.security.auth.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -30,6 +32,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final Clock clock;
+
+    @Value("${app.user.default-profile-image}")
+    private final String DEFAULT_PROFILE_IMAGE;
 
     @Override
     public void signup(UserSignUpRequest request){
@@ -54,7 +59,7 @@ public class UserServiceImpl implements UserService {
 
         //회원 저장
         //회원가입 중복 실행 시 에러 메시지 일관되게 반환
-        //나중에 user에 unique 제약이 추가되면, 에러를 필드에 따라 상세하게 분리해야 함
+        //나중에 user에 unique 제약이 추가되면, 에러를 필드에 따라 상세하게 분리해야 함 예를 들어 휴대폰 번호 중복, 닉네임 중복 등등
         try {
             userRepository.save(user);
         }catch(DataIntegrityViolationException e){
@@ -65,12 +70,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void withdraw(Long userId){
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
-
-        if(user.isDeleted()){
-            throw new UserException(ErrorCode.DELETED_USER);
-        }
+        User user = findActiveUser(userId);
 
         user.delete(LocalDateTime.now(clock));
         //유저와 관련된 모든 refresh token DB에서 삭제
@@ -80,24 +80,67 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserSummaryResponse getMySummary(Long userId){
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+        User user = findActiveUser(userId);
 
-        return UserSummaryResponse.from(user);
+        return UserSummaryResponse.from(user, DEFAULT_PROFILE_IMAGE);
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserDetailResponse getMyDetail(Long userId){
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+        User user = findActiveUser(userId);
 
-        return UserDetailResponse.from(user);
+        return UserDetailResponse.from(user, DEFAULT_PROFILE_IMAGE);
     }
 
     @Override
-    public void updateMe(UserUpdateRequest userUpdateRequest,Long userId){
+    public void updateMe(UserUpdateRequest request, Long userId) {
+        User user = findActiveUser(userId);
+
+        if(request.name() != null) user.changeName(request.name());
+        if(request.nickname() != null) user.changeNickname(request.nickname());
+        if(request.phoneNumber() != null) user.changePhoneNumber(request.phoneNumber());
+        if(request.birthDate() != null ) user.changeBirthDate(request.birthDate());
+        if(request.gender() != null ) user.changeGender(request.gender());
 
     }
+
+    @Override
+    public void updateMyProfileImage(MultipartFile newImage, Long userId) {
+        User user = findActiveUser(userId);
+
+        if (newImage == null || newImage.isEmpty()) {
+            throw new UserException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        String oldImageUrl = user.getProfileImage();
+        // 이미지 저장소에 새 이미지 저장
+        //String newProfileImageUrl = 파일저장소.save(newProfileImage, userId);
+        //user.changeProfileImage(newProfileImageUrl);
+
+        //deleteAfterCommit(oldImageUrl); //null 이면 지울게 없음
+    }
+
+    @Override
+    public void deleteMyProfileImage(Long userId) {
+        User user = findActiveUser(userId);
+
+        String oldImage = user.getProfileImage();
+        user.changeProfileImage(null); // null = 기본이미지
+
+        //deleteAfterCommit(oldImageUrl); //null 이면 지울게 없음
+    }
+
+    private User findActiveUser(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        if(user.isDeleted()){
+            throw new UserException(ErrorCode.DELETED_USER);
+        }
+
+        return user;
+    }
+
 
 }
