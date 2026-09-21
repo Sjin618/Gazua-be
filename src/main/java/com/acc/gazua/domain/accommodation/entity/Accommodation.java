@@ -22,7 +22,7 @@ public class Accommodation {
     @Column(name = "accommodation_id")
     private Long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     private User host; //숙소 주인
 
     private String name; //숙소 이름

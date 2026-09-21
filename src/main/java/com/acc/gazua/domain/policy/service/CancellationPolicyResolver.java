@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 public class CancellationPolicyResolver {
 
     public CancellationPolicyType resolve(Room room) {
-        Accommodation accommodation = room.getAccommodation();
+        return resolve(room.getAccommodation());
+    }
+
+    public CancellationPolicyType resolve(Accommodation accommodation) {
         if (accommodation.getCancellationPolicy() != null) {
             return accommodation.getCancellationPolicy();
         }

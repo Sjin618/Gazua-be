@@ -1,13 +1,17 @@
 package com.acc.gazua.domain.accommodation.repository;
 
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
+import com.acc.gazua.domain.accommodation.dto.AccommodationSortType;
 import com.acc.gazua.domain.accommodation.entity.QAccommodation;
+import com.acc.gazua.global.dto.ErrorCode;
+import com.acc.gazua.global.exception.BusinessException;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,11 +22,12 @@ public class AccommodationQueryRepository {
     private final JPAQueryFactory jpaQueryFactory;
     private final QAccommodation accommodation = QAccommodation.accommodation;
 
-    public List<AccommodationSearchDto> searchAccommodationSortByReviewDesc(String region,
-                                                    Integer personal,
-                                                    Integer cursorReviewCount,
-                                                    Long cursorId,
-                                                    int size){
+    public List<AccommodationSearchDto> search(String region,
+                                               Integer personal,
+                                               AccommodationSortType sortType,
+                                               String cursorValue,
+                                               Long cursorId,
+                                               int size) {
         return jpaQueryFactory.select(Projections.constructor(AccommodationSearchDto.class,
                         accommodation.id,
                         accommodation.name,
@@ -33,31 +38,9 @@ public class AccommodationQueryRepository {
                 .where(
                         eqRegion(region),
                         goePersonal(personal),
-                        reviewCountCursorCondition(cursorReviewCount, cursorId)
+                        cursorCondition(sortType, cursorValue, cursorId)
                 )
-                .orderBy(accommodation.reviewCount.desc(), accommodation.id.desc())
-                .limit(size)
-                .fetch();
-    }
-
-    public List<AccommodationSearchDto> searchAccommodationSortByAverageStarDesc(String region,
-                                                                                 Integer personal,
-                                                                                 BigDecimal cursorStar,
-                                                                                 Long cursorId,
-                                                                                 int size){
-        return jpaQueryFactory.select(Projections.constructor(AccommodationSearchDto.class,
-                        accommodation.id,
-                        accommodation.name,
-                        accommodation.thumbnailUrl,
-                        accommodation.averageStar,
-                        accommodation.reviewCount))
-                .from(accommodation)
-                .where(
-                        eqRegion(region),
-                        goePersonal(personal),
-                        averageStarCursorCondition(cursorStar, cursorId)
-                )
-                .orderBy(accommodation.averageStar.desc(), accommodation.id.desc())
+                .orderBy(sortOrder(sortType), accommodation.id.desc())
                 .limit(size)
                 .fetch();
     }
@@ -70,25 +53,30 @@ public class AccommodationQueryRepository {
         return personal != null ? accommodation.maxCapacity.goe(personal) : null;
     }
 
-    private BooleanExpression reviewCountCursorCondition(Integer cursorReviewCount,Long cursorId){
-        if(cursorReviewCount == null || cursorId == null){
-            return null;
-        }
-        return accommodation.reviewCount.lt(cursorReviewCount)
-                .or(
-                        accommodation.reviewCount.eq(cursorReviewCount)
-                        .and(accommodation.id.lt(cursorId))
-                );
+    private OrderSpecifier<?> sortOrder(AccommodationSortType sortType){
+        return switch (sortType) {
+            case REVIEW -> accommodation.reviewCount.desc();
+            case AVERAGESTAR -> accommodation.averageStar.desc();
+        };
     }
 
-    private BooleanExpression averageStarCursorCondition(BigDecimal cursorStar,Long cursorId){
-        if(cursorStar == null || cursorId == null){
+    private BooleanExpression cursorCondition(AccommodationSortType sortType, String cursorValue, Long cursorId) {
+        if (cursorValue == null || cursorId == null) {
             return null;
         }
-
-        return accommodation.averageStar.lt(cursorStar)
-                .or(
-                        accommodation.averageStar.eq(cursorStar)
-                        .and(accommodation.id.lt(cursorId)));
+        try {
+            return switch (sortType) {
+                case REVIEW -> descCursor(accommodation.reviewCount, Integer.parseInt(cursorValue), cursorId);
+                case AVERAGESTAR -> descCursor(accommodation.averageStar, new BigDecimal(cursorValue), cursorId);
+            };
+        }catch (NumberFormatException e){
+            throw new BusinessException(ErrorCode.INVALID_CURSOR, e);
+        }
     }
+
+    private <T extends Number & Comparable<?>> BooleanExpression descCursor(NumberPath<T> path, T value, Long cursorId) {
+        return path.lt(value)
+                .or(path.eq(value).and(accommodation.id.lt(cursorId)));
+    }
+
 }

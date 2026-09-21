@@ -13,9 +13,6 @@ import com.acc.gazua.domain.reservation.repository.ReservationRepository;
 import com.acc.gazua.domain.room.entity.Room;
 import com.acc.gazua.domain.room.exception.RoomException;
 import com.acc.gazua.domain.room.repository.RoomRepository;
-import com.acc.gazua.domain.roominventory.entity.RoomInventory;
-import com.acc.gazua.domain.roominventory.exception.RoomInventoryException;
-import com.acc.gazua.domain.roominventory.repository.RoomInventoryRepository;
 import com.acc.gazua.domain.roominventory.service.RoomInventoryService;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
@@ -32,7 +29,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -75,15 +71,16 @@ public class ReservationHoldService {
 
     public ReservationInitResponse createHold(ReservationInitRequest request, Long userId, String dedupKey) {
         // 락 없는 구간
-        LocalDate checkIn = request.checkDate().getCheckIn();
-        LocalDate checkOut = request.checkDate().getCheckOut();
+        LocalDate checkIn = request.checkDate().checkIn();
+        LocalDate checkOut = request.checkDate().checkOut();
         LocalDate today = LocalDate.now(clock);
 
         //몇 박인지 계산, 1보다 낮거나 체크인 날짜가 오늘 이전이면 불가능
-        long nightDays = ChronoUnit.DAYS.between(checkIn, checkOut);
+        long nightDays = request.checkDate().stayDays();
         if(nightDays < 1 || checkIn.isBefore(today)){
             throw new ReservationException(ErrorCode.INVALID_CHECK_DATE);
         }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
@@ -110,7 +107,7 @@ public class ReservationHoldService {
                 .build();
 
         // 결제하기 중복 요청이 들어온다면 여기서 dedup key unique 위반에 걸려 에러가 터진다.
-        reservationRepository.saveAndFlush(reservation);
+        reservationRepository.save(reservation);
 
         paymentRepository.save(Payment.builder()
                 .status(PaymentStatus.READY)

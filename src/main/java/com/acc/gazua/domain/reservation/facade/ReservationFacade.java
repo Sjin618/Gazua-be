@@ -85,7 +85,7 @@ public class ReservationFacade {
 
     //제약 위반으로 롤백된 트랜잭션 안에서는 재조회가 불가능하기 때문에 트랜잭션 밖에서 수행 - REPEATABLE READ 락 스냅샷
     public ReservationInitResponse init(ReservationInitRequest request, Long userId) {
-        String dedupKey = Reservation.dedupKeyOf(userId, request.roomId(), request.checkDate().getCheckIn(), request.checkDate().getCheckOut());
+        String dedupKey = Reservation.dedupKeyOf(userId, request.roomId(), request.checkDate().checkIn(), request.checkDate().checkOut());
 
         //살아있는 예약이 있으면 재고를 건드리지 않고 그대로 반환
         Optional<ReservationInitResponse> reused = reservationHoldService.reuseHold(dedupKey);

@@ -34,6 +34,7 @@ public enum ErrorCode {
     //숙소 관련 에러
     ACCOMMODATION_NOT_FOUND(404,"A001","존재하지 않는 숙소입니다."),
     INVALID_CHECK_DATE(400,"A002","체크아웃 날짜는 체크인 날짜보다 최소 1일 이상 커야합니다."),
+    TOO_MANY_STAY_NIGHTS(400,"A003","최대 30박을 넘길 수 없습니다."),
 
     //좋아요 관련 에러
     ALREADY_LIKE(400,"L001","이미 좋아요한 숙소입니다."),

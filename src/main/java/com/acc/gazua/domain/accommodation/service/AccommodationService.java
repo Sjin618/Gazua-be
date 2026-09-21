@@ -1,12 +1,17 @@
 package com.acc.gazua.domain.accommodation.service;
 
+import com.acc.gazua.domain.accommodation.dto.AccommodationGetResponse;
 import com.acc.gazua.domain.accommodation.dto.AccommodationRegisterRequest;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
+import com.acc.gazua.domain.accommodation.dto.AccommodationSearchRequest;
 import com.acc.gazua.domain.accommodation.entity.Accommodation;
 import com.acc.gazua.domain.accommodation.entity.CheckDate;
 import com.acc.gazua.domain.accommodation.exception.AccommodationException;
 import com.acc.gazua.domain.accommodation.repository.AccommodationQueryRepository;
 import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
+import com.acc.gazua.domain.accommodationimage.repository.AccommodationImageRepository;
+import com.acc.gazua.domain.policy.entity.CancellationPolicyType;
+import com.acc.gazua.domain.policy.service.CancellationPolicyResolver;
 import com.acc.gazua.domain.roominventory.dto.AvailableRoomDto;
 import com.acc.gazua.domain.roominventory.repository.RoomInventoryRepository;
 import com.acc.gazua.domain.user.entity.User;
@@ -15,55 +20,45 @@ import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.dto.CustomCursor;
 import com.acc.gazua.global.dto.ErrorCode;
-import com.acc.gazua.global.exception.BusinessException;
 import com.acc.gazua.global.page.JsonCursorUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final AccommodationQueryRepository accommodationQueryRepository;
     private final UserRepository userRepository;
     private final RoomInventoryRepository roomInventoryRepository;
+    private final AccommodationImageRepository accommodationImageRepository;
     private final JsonCursorUtils jsonCursorUtils;
+    private final CancellationPolicyResolver policyResolver;
 
-    public CursorPage<AccommodationSearchDto> searchAccommodation(String region,
-                                                                  Integer personal,
-                                                                  CheckDate checkDate,
-                                                                  String sortType,
-                                                                  String cursor,
-                                                                  int size) {
-        CustomCursor customCursor = jsonCursorUtils.deserialize(cursor);
-        int limit = size + 1;
-        Long cursorId = customCursor == null ? Long.MAX_VALUE : customCursor.cursorId();
+    public CursorPage<AccommodationSearchDto> searchAccommodation(AccommodationSearchRequest request) {
+        CheckDate checkDate = new CheckDate(request.checkIn(), request.checkOut());
 
-        List<AccommodationSearchDto> accs = null;
-        if ("REVIEW".equals(sortType)) {
-            Integer cursorReviewCount = customCursor == null ? null : Integer.parseInt(customCursor.cursorValue());
-            accs = accommodationQueryRepository.searchAccommodationSortByReviewDesc(region,
-                    personal,
-                    cursorReviewCount,
-                    cursorId,
-                    limit);
-        } else if ("AVERAGESTAR".equals(sortType)) {
-            BigDecimal cursorAverageStar = customCursor == null ? null : new BigDecimal(customCursor.cursorValue());
-            accs = accommodationQueryRepository.searchAccommodationSortByAverageStarDesc(region,
-                    personal,
-                    cursorAverageStar,
-                    cursorId,
-                    limit);
-        } else {
-            throw new BusinessException(ErrorCode.INVALID_SORT_TYPE);
-        }
+        //조회 전에 날짜부터 검증
+        long stayDays = checkDate.stayDays();
+
+        CustomCursor customCursor = jsonCursorUtils.deserialize(request.cursor());
+        Long cursorId = customCursor == null ? null: customCursor.cursorId();
+        String cursorValue = customCursor == null ? null : customCursor.cursorValue();
+        int size = request.size();
+
+        List<AccommodationSearchDto> accs = accommodationQueryRepository.search(request.region(),
+                request.personal(),
+                request.sortType(),
+                cursorValue,
+                cursorId,
+                size + 1);
 
         //더 이상 항목이 존재하지 않는다면 빈 리스트 반환
         if (accs.isEmpty()) {
@@ -77,18 +72,13 @@ public class AccommodationService {
         }
 
         //숙소에서 최저가 방 가격 가져오기
-        long stayDays = ChronoUnit.DAYS.between(checkDate.getCheckIn(), checkDate.getCheckOut());
-        if (stayDays <= 0) {
-            throw new AccommodationException(ErrorCode.INVALID_CHECK_DATE);
-        }
-
         List<Long> accIds = accs.stream()
                 .map(AccommodationSearchDto::getId)
                 .toList();
 
         List<AvailableRoomDto> rooms = roomInventoryRepository.findAvailableRoomsWithTotalPrice(accIds,
-                checkDate.getCheckIn(),
-                checkDate.getCheckOut(),
+                checkDate.checkIn(),
+                checkDate.checkOut(),
                 stayDays);
 
         //첫 번째 쿼리에서 가져온 숙소와 두 번째 쿼리에서 가져온 최저가 가격 매칭시키기
@@ -114,16 +104,13 @@ public class AccommodationService {
         //cursor 를 만들어서 반환
         AccommodationSearchDto lastItem = accs.get(accs.size() - 1);
 
-        String encodedCursor = "";
-        if ("REVIEW".equals(sortType)) {
-            encodedCursor = jsonCursorUtils.serialize(new CustomCursor(lastItem.getReviewCount().toString(), lastItem.getId()));
-        } else if ("AVERAGESTAR".equals(sortType)) {
-            encodedCursor = jsonCursorUtils.serialize(new CustomCursor(lastItem.getAverageStar().toString(), lastItem.getId()));
-        }
+        String encodedCursor = hasNext ?
+                jsonCursorUtils.serialize(new CustomCursor(request.sortType().cursorValueOf(lastItem), lastItem.getId())) : null;
 
         return new CursorPage<>(accs, encodedCursor, hasNext);
     }
 
+    @Transactional
     public void registerAccommodation(AccommodationRegisterRequest registerRequest){
         User host = userRepository.findById(registerRequest.getHostId())
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
@@ -137,4 +124,17 @@ public class AccommodationService {
 
         accommodationRepository.save(accommodation);
     }
+
+    //숙소 상세 조회
+    public AccommodationGetResponse getAccommodation(Long accId){
+        Accommodation accommodation = accommodationRepository.findById(accId)
+                .orElseThrow(() -> new AccommodationException(ErrorCode.ACCOMMODATION_NOT_FOUND));
+
+        List<String> images = accommodationImageRepository.findImageUrlByAccommodationId(accId);
+
+        CancellationPolicyType cancellationPolicy = policyResolver.resolve(accommodation);
+
+        return AccommodationGetResponse.from(accommodation, images, cancellationPolicy);
+    }
+
 }
