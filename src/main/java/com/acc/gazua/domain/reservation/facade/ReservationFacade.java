@@ -74,7 +74,7 @@ public class ReservationFacade {
     }
 
     public PaymentSyncResult confirmReservation(ReservationConfirmRequest request, Long userId){
-        Payment payment = paymentRepository.findByPaymentIdWithReservation(request.getPaymentId())
+        Payment payment = paymentRepository.findByPaymentIdWithReservationAndUser(request.getPaymentId())
                 .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
 
         //동일한 유저가 아니면 AccessDeniedException 발생

@@ -77,8 +77,8 @@ public class ReservationHoldService {
 
         //몇 박인지 계산, 1보다 낮거나 체크인 날짜가 오늘 이전이면 불가능
         long nightDays = request.checkDate().stayDays();
-        if(nightDays < 1 || checkIn.isBefore(today)){
-            throw new ReservationException(ErrorCode.INVALID_CHECK_DATE);
+        if(checkIn.isBefore(today)){
+            throw new ReservationException(ErrorCode.PAST_CHECK_IN_DATE);
         }
 
         User user = userRepository.findById(userId)

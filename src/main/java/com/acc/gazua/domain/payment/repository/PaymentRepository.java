@@ -17,8 +17,8 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    @Query("SELECT p FROM Payment p JOIN FETCH p.reservation r WHERE p.paymentId = :paymentId")
-    Optional<Payment> findByPaymentIdWithReservation(String paymentId);
+    @Query("SELECT p FROM Payment p JOIN FETCH p.reservation r JOIN FETCH r.user WHERE p.paymentId = :paymentId")
+    Optional<Payment> findByPaymentIdWithReservationAndUser(String paymentId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Payment p WHERE p.paymentId = :paymentId")
