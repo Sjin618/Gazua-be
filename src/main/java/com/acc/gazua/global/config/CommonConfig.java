@@ -2,6 +2,7 @@ package com.acc.gazua.global.config;
 
 import io.portone.sdk.server.webhook.WebhookVerifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.validation.autoconfigure.ValidationConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.auditing.DateTimeProvider;
@@ -35,6 +36,11 @@ public class CommonConfig {
     @Bean
     public DateTimeProvider auditingDateTimeProvider(Clock clock){
         return () -> Optional.of(LocalDateTime.now(clock));
+    }
+
+    @Bean
+    public ValidationConfigurationCustomizer validationClockCustomizer(Clock clock) {
+        return configuration -> configuration.clockProvider(() -> clock);
     }
 
     @Bean
