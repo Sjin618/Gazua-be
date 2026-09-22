@@ -2,6 +2,7 @@ package com.acc.gazua.domain.accommodation.repository;
 
 import com.acc.gazua.domain.accommodation.dto.AccommodationSearchDto;
 import com.acc.gazua.domain.accommodation.dto.AccommodationSortType;
+import com.acc.gazua.domain.accommodation.entity.AccommodationType;
 import com.acc.gazua.domain.accommodation.entity.QAccommodation;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.exception.BusinessException;
@@ -25,6 +26,7 @@ public class AccommodationQueryRepository {
     public List<AccommodationSearchDto> search(String region,
                                                Integer personal,
                                                AccommodationSortType sortType,
+                                               List<AccommodationType> types,
                                                String cursorValue,
                                                Long cursorId,
                                                int size) {
@@ -38,6 +40,7 @@ public class AccommodationQueryRepository {
                 .where(
                         eqRegion(region),
                         goePersonal(personal),
+                        eqType(types),
                         cursorCondition(sortType, cursorValue, cursorId)
                 )
                 .orderBy(sortOrder(sortType), accommodation.id.desc())
@@ -51,6 +54,10 @@ public class AccommodationQueryRepository {
 
     private BooleanExpression goePersonal(Integer personal){
         return personal != null ? accommodation.maxCapacity.goe(personal) : null;
+    }
+
+    private BooleanExpression eqType(List<AccommodationType> types) {
+        return types == null || types.isEmpty() ? null : accommodation.type.in(types);
     }
 
     private OrderSpecifier<?> sortOrder(AccommodationSortType sortType){

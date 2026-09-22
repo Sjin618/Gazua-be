@@ -56,6 +56,7 @@ public class AccommodationService {
         List<AccommodationSearchDto> accs = accommodationQueryRepository.search(request.region(),
                 request.personal(),
                 request.sortType(),
+                request.types(),
                 cursorValue,
                 cursorId,
                 size + 1);
