@@ -70,6 +70,9 @@ public enum ErrorCode {
     RESERVATION_EXPIRED(400,"P009","결제가 완료되지 않아 만료된 예약입니다."),
     PAYMENT_MANUAL_REVIEW(500,"P010","결제 처리에 문제가 발생했습니다. 확인 후 안내드리겠습니다."),
 
+    //알림 관련 에러
+    NOTIFICATION_NOT_FOUND(404,"N001","존재하지 않는 알림입니다."),
+
 
     //Jwt 관련 에러
     INVALID_TOKEN(401,"J001","잘못된 서명 또는 유효하지 않은 토큰입니다."),
