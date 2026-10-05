@@ -7,7 +7,6 @@ import com.acc.gazua.global.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,8 +18,8 @@ public class Payment extends BaseTimeEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id", nullable = false, unique = true)
     private Reservation reservation;
 
     @Column(nullable = false, unique = true)
@@ -57,12 +56,8 @@ public class Payment extends BaseTimeEntity {
         this.paidAt = paidAt;
         this.payMethod = payMethod;
         this.pgProvider = pgProvider;
-    }
-
-    public void refundPayment(LocalDateTime cancelledAt, String cancelReason) {
-        this.status = PaymentStatus.REFUND;
-        this.cancelledAt = cancelledAt;
-        this.cancelReason = cancelReason;
+        this.cancelledAt = null; //재시도 전 실패 기록 제거
+        this.cancelReason = null;
     }
 
     //사용자 환불 요청 시, 우리 서버 기준으로 환불 요청 처리
@@ -76,19 +71,29 @@ public class Payment extends BaseTimeEntity {
     }
 
     //PG사에서 준 환불 상태를 그대로 저장한다. (우리 서버에서 임의로 처리하지 않음)
-    public void completeRefund(LocalDateTime cancelledAt, long cancelledTotal,
+    public void completeRefund(LocalDateTime cancelledAt, long refundTotal,
                                String reason, boolean fullyCancelled) {
         this.status = fullyCancelled ? PaymentStatus.REFUND : PaymentStatus.PARTIAL_REFUND;
-        this.refundAmount = (int) cancelledTotal;
+        this.refundAmount = (int) refundTotal;
         this.cancelFee = this.price - this.refundAmount;
         this.cancelledAt = cancelledAt;
         this.cancelReason = reason;
+    }
+
+    public boolean isAwaitingPayment() {
+        return this.status == PaymentStatus.READY || this.status == PaymentStatus.FAILED;
     }
 
     public void forfeit(LocalDateTime cancelledAt, String reason) {
         this.status = PaymentStatus.FORFEITED;
         this.refundAmount = 0;
         this.cancelFee = this.price;
+        this.cancelledAt = cancelledAt;
+        this.cancelReason = reason;
+    }
+
+    public void fail(LocalDateTime cancelledAt, String reason){
+        this.status = PaymentStatus.FAILED;
         this.cancelledAt = cancelledAt;
         this.cancelReason = reason;
     }

@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@Table(uniqueConstraints = @UniqueConstraint(name = "uk_reservation_dedup_key", columnNames = "dedup_key"))
 public class Reservation extends BaseTimeEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

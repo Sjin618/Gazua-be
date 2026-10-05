@@ -2,12 +2,14 @@ package com.acc.gazua.domain.reservation.service;
 
 import com.acc.gazua.domain.payment.entity.Payment;
 import com.acc.gazua.domain.payment.entity.PaymentStatus;
+import com.acc.gazua.domain.payment.exception.PaymentException;
 import com.acc.gazua.domain.payment.repository.PaymentRepository;
 import com.acc.gazua.domain.policy.entity.RefundPolicySnapshot;
 import com.acc.gazua.domain.policy.service.CancellationPolicyResolver;
 import com.acc.gazua.domain.reservation.dto.ReservationInitRequest;
 import com.acc.gazua.domain.reservation.dto.ReservationInitResponse;
 import com.acc.gazua.domain.reservation.entity.Reservation;
+import com.acc.gazua.domain.reservation.entity.ReservationStatus;
 import com.acc.gazua.domain.reservation.exception.ReservationException;
 import com.acc.gazua.domain.reservation.repository.ReservationRepository;
 import com.acc.gazua.domain.room.entity.Room;
@@ -59,13 +61,10 @@ public class ReservationHoldService {
             return Optional.empty();         //createHold 로 새로 만들게 한다.
         }
 
-        Payment payment = paymentRepository.findFirstByReservation_IdAndStatusOrderByIdDesc(reservation.getId(), PaymentStatus.READY)
-                .orElseGet(() -> paymentRepository.save(Payment.builder()
-                        .status(PaymentStatus.READY)
-                        .price(reservation.getTotalPrice())
-                        .reservation(reservation)
-                        .paymentId(makePaymentId(reservation.getRoom().getId()))
-                        .build()));
+        //createHold() 가 예약과 결제를 동시 생성하기 때문에, 예약이 있다면 결제도 있음
+        Payment payment = paymentRepository.findByReservationId(reservation.getId())
+                .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+
         return Optional.of(toInitResponse(payment.getPaymentId(), reservation, reservation.getUser()));
     }
 
@@ -103,6 +102,7 @@ public class ReservationHoldService {
                 .refundPolicy(policy)
                 .totalPrice(price)
                 .dedupKey(dedupKey)
+                .status(ReservationStatus.PENDING)
                 .holdExpiresAt(LocalDateTime.now(clock).plus(HOLD_DURATION))
                 .build();
 

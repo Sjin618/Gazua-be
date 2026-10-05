@@ -1,5 +1,6 @@
 package com.acc.gazua.global.portone;
 
+import com.acc.gazua.global.portone.exception.PortOneConflictException;
 import com.acc.gazua.global.portone.exception.PortOnePaymentNotFoundException;
 import com.acc.gazua.global.portone.exception.PortOneRequestException;
 import com.acc.gazua.global.portone.exception.PortOneUnavailableException;
@@ -80,18 +81,19 @@ public class PortOneClient {
 
 
     //환불
-    public void refundPayment(String paymentId, Long amount, String reason) {
+    public void refundPayment(String paymentId, Long amount, String reason, Long currentCancellableAmount) {
         try {
             restTemplate.exchange(
                     REFUND_URL,
                     HttpMethod.POST,
-                    new HttpEntity<>(new RefundPaymentRequest(amount, reason),getHeader()),
+                    new HttpEntity<>(new RefundPaymentRequest(amount, reason, currentCancellableAmount), getHeader()),
                     Void.class,
                     paymentId
             );
         }catch(HttpClientErrorException.Conflict e){
             //이미 취소된 결제 - 멱등 처리, 이후 syncPayment가 상태를 맞춘다
-            log.info("이미 취소된 결제 - paymentId={}", paymentId);
+            log.info("포트원 취소 거부(409) - paymentId={}, body={}", paymentId, e.getResponseBodyAsString());
+            throw new PortOneConflictException("포트원 취소 거부: " + paymentId, e);
         }catch(HttpClientErrorException e){
             // 4xx — 우리 요청이 잘못됨 (시크릿 오류 등). 재시도 무의미, 즉시 인지해야 함
             log.error("포트원 취소 요청 오류 - paymentId={}, status={}, body={}",
@@ -107,7 +109,7 @@ public class PortOneClient {
             String paymentId,
             String status,
             long paidTotal,
-            long cancelledTotal,
+            long refundTotal,
             Instant paidAt,
             Instant cancelledAt,
             String payMethod,
@@ -139,5 +141,5 @@ public class PortOneClient {
     public record PaymentChannel(String pgProvider){}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record RefundPaymentRequest(Long amount, String reason){}
+    public record RefundPaymentRequest(Long amount, String reason, Long currentCancellableAmount){}
 }

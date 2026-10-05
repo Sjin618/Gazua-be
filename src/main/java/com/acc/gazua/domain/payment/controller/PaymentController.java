@@ -1,20 +1,13 @@
 package com.acc.gazua.domain.payment.controller;
 
-import com.acc.gazua.domain.payment.dto.PaymentPrepareRequest;
-import com.acc.gazua.domain.payment.dto.PaymentPrepareResponse;
-import com.acc.gazua.domain.payment.dto.PaymentVerifyRequest;
-import com.acc.gazua.domain.payment.service.PaymentService;
 import com.acc.gazua.domain.payment.service.PaymentSyncResult;
 import com.acc.gazua.domain.payment.service.PaymentSyncService;
-import com.acc.gazua.global.dto.ApiResponse;
-import com.acc.gazua.global.security.details.CustomUserDetails;
 import io.portone.sdk.server.errors.WebhookVerificationException;
 import io.portone.sdk.server.webhook.WebhookVerifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

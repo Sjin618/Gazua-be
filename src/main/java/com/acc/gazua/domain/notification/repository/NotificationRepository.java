@@ -46,4 +46,8 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
             "WHERE n.user.id = :userId AND n.isRead = false AND n.id <= :lastId")
     void updateReadAll(@Param("userId") Long userId,
                        @Param("lastId") Long lastId);
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.createdAt < :threshold")
+    int deleteCreatedBefore(@Param("threshold") LocalDateTime threshold);
 }

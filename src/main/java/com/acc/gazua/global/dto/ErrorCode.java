@@ -61,14 +61,16 @@ public enum ErrorCode {
     //결제 관련 에러
     PAYMENT_NOT_FOUND(404,"P001","존재하지 않는 결제입니다."),
     PAYMENT_NOT_CANCELABLE(400,"P002","취소할 수 없는 결제입니다."),
-    ALREADY_REFUNDED(400,"P003","이미 환불된 결제입니다."),
-    REFUND_REQUEST_FAILED(503,"P004","환불 요청에 실패했습니다. 잠시 후 다시 시도해주세요."),
-    PAYMENT_AMOUNT_MISMATCH(400,"P005","결제 금액이 일치하지 않습니다."),
-    PAYMENT_CANCELLED_OR_FAILED(400,"P006","결제가 취소되었거나 실패했습니다."),
-    PAYMENT_STATUS_UNKNOWN(500,"P007","결제 상태를 확인할 수 없습니다. 고객센터로 문의해 주세요."),
-    PAYMENT_CONFIRM_DELAYED(503,"P008","결제 확인이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
-    RESERVATION_EXPIRED(400,"P009","결제가 완료되지 않아 만료된 예약입니다."),
-    PAYMENT_MANUAL_REVIEW(500,"P010","결제 처리에 문제가 발생했습니다. 확인 후 안내드리겠습니다."),
+    ALREADY_REFUNDED(400,"P003","이미 환불 처리가 접수된 결제입니다."),
+    PAYMENT_AMOUNT_MISMATCH(400,"P004","결제 금액이 일치하지 않아 자동 환불되었습니다."),
+    PAYMENT_FAILED(400,"P005","결제에 실패했습니다. 다시 시도해주세요."),
+    PAYMENT_STATUS_UNKNOWN(500,"P006","결제 상태를 확인할 수 없습니다. 고객센터로 문의해 주세요."),
+    PAYMENT_CONFIRM_DELAYED(503,"P007","결제 확인이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
+    RESERVATION_EXPIRED(400,"P008","예약 가능 시간이 지나 결제 금액이 자동 환불됩니다."),
+    PAYMENT_MANUAL_REVIEW(500,"P009","결제 처리에 문제가 발생했습니다. 확인 후 안내드리겠습니다."),
+    CANCEL_IN_PROGRESS(409, "P010", "환불이 진행 중에 있습니다."),
+    PAYMENT_CANCELLED(409, "P011", "취소 또는 환불된 결제입니다. 예약 내역에서 확인해주세요."),
+
 
     //알림 관련 에러
     NOTIFICATION_NOT_FOUND(404,"N001","존재하지 않는 알림입니다."),

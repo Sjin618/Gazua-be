@@ -45,7 +45,7 @@ public class ReservationController {
         PaymentSyncResult result = reservationFacade.confirmReservation(request, user.getUserId());
         //실패 상태는 예외로 올려 GlobalExceptionHandler 가 ErrorResponse 로 변환한다
         return switch(result){
-            case CONFIRMED, ALREADY_DONE ->
+            case CONFIRMED, ALREADY_CONFIRMED ->
                     ResponseEntity.ok(ApiResponse.success("예약이 확정되었습니다."));
 
             case NOT_PAID_YET ->
@@ -57,8 +57,11 @@ public class ReservationController {
             case AMOUNT_MISMATCH ->
                     throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
 
-            case CANCELLED, FAILED ->
-                    throw new PaymentException(ErrorCode.PAYMENT_CANCELLED_OR_FAILED);
+            case CANCELLED ->
+                    throw new PaymentException(ErrorCode.PAYMENT_CANCELLED);
+
+            case FAILED ->
+                    throw new PaymentException(ErrorCode.PAYMENT_FAILED);
 
             case RESERVATION_EXPIRED ->
                     throw new PaymentException(ErrorCode.RESERVATION_EXPIRED);
@@ -76,9 +79,8 @@ public class ReservationController {
                                                                @PathVariable("reservationId") Long reservationId,
                                                                @Valid @RequestBody ReservationCancelRequest request){
 
-        CancelOutcome outcome = reservationFacade.cancel(user.getUserId(), reservationId, request.getReason());
-        return ResponseEntity.ok(ApiResponse.success(ReservationCancelResponse.from(outcome.calc(), outcome.settled()),
-                outcome.settled() ? "예약이 취소되었습니다." : "예약 취소가 접수되었습니다."));
+        RefundCalculation calc = reservationFacade.cancel(user.getUserId(), reservationId, request.getReason());
+        return ResponseEntity.ok(ApiResponse.success(ReservationCancelResponse.from(calc),"예약 취소가 접수되었습니다."));
     }
 
     //예약 내역(리스트) 가져오기 (이용 전, 이용 후, 취소 환불)

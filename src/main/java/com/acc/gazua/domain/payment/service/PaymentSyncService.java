@@ -2,6 +2,7 @@ package com.acc.gazua.domain.payment.service;
 
 import com.acc.gazua.domain.reservation.service.ReservationPaymentService;
 import com.acc.gazua.global.portone.PortOneClient;
+import com.acc.gazua.global.portone.exception.PortOneConflictException;
 import com.acc.gazua.global.portone.exception.PortOnePaymentNotFoundException;
 import com.acc.gazua.global.portone.exception.PortOneRequestException;
 import com.acc.gazua.global.portone.exception.PortOneUnavailableException;
@@ -47,12 +48,11 @@ public class PaymentSyncService {
         }
         if (snapshot.isFullyCancelled() || snapshot.isPartialCancelled()) {
             return reservationPaymentService.applyCancelled(paymentId, snapshot.cancelledAt(), "취소 정책 적용 환불",
-                    snapshot.cancelledTotal(), snapshot.isFullyCancelled());
+                    snapshot.refundTotal(), snapshot.isFullyCancelled());
         }
 
         if (snapshot.isFailed()) {
-            reservationPaymentService.applyCancelled(paymentId, Instant.now(), "결제 실패", 0L, true);
-            return PaymentSyncResult.FAILED;
+            return reservationPaymentService.applyFailed(paymentId, "결제 실패");
         }
 
         // READY / PENDING / VIRTUAL_ACCOUNT_ISSUED / PAY_PENDING
@@ -60,24 +60,27 @@ public class PaymentSyncService {
         return PaymentSyncResult.NOT_PAID_YET;
     }
 
-    public PaymentSyncResult handlePaid(PortOnePaymentSnapshot snapshot){
+    public PaymentSyncResult handlePaid(PortOnePaymentSnapshot snapshot) {
         PaymentSyncResult result = reservationPaymentService.applyPaid(snapshot);
 
-        String reason = switch(result){
+        String reason = switch (result) {
             case AMOUNT_MISMATCH -> "결제 금액 불일치(위변조 의심)";
             case RESERVATION_EXPIRED -> "이미 만료된 예약";
             default -> null;
         };
 
-        if(reason == null) return result;
+        if (reason == null) return result;
 
         log.error("자동 환불 진행 - paymentId={}, 사유={}", snapshot.paymentId(), reason);
-        try{
-            portOneClient.refundPayment(snapshot.paymentId(), null, reason + "(으)로 환불 처리되었습니다.");
-        }catch (PortOneRequestException e){
+        try {
+            portOneClient.refundPayment(snapshot.paymentId(), null, reason + "(으)로 환불 처리되었습니다.", snapshot.paidTotal());
+        } catch (PortOneConflictException e) {
+            //웹훅과 /confirm 이 동시에 와서 다른 쪽이 먼저 전액 환불했다 - 결과가 같으므로 아래에서 전액 환불로 기록
+            log.info("자동 환불 중복 요청 - 이미 처리됨 - paymentId={}", snapshot.paymentId());
+        } catch (PortOneRequestException e) {
             log.warn("포트원 환불 요청 실패 - 수동 조작 필요 - paymentId={}", snapshot.paymentId(), e);
             return PaymentSyncResult.MANUAL_REVIEW_REQUIRED;
-        }catch (PortOneUnavailableException e){
+        } catch (PortOneUnavailableException e) {
             //포트원 조회 실패는 재시도
             log.warn("포트원 서버 오류 환불 요청 실패 - 상태 유지 - paymentId={}", snapshot.paymentId(), e);
             return PaymentSyncResult.PORTONE_UNAVAILABLE;

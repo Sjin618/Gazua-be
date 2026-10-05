@@ -20,24 +20,22 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p JOIN FETCH p.reservation r JOIN FETCH r.user WHERE p.paymentId = :paymentId")
     Optional<Payment> findByPaymentIdWithReservationAndUser(String paymentId);
 
+    @Query("SELECT p FROM Payment p JOIN FETCH p.reservation r JOIN FETCH r.user WHERE p.reservation.id = :reservationId")
+    Optional<Payment> findByReservationIdWithReservationAndUser(@Param("reservationId") Long reservationId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Payment p WHERE p.paymentId = :paymentId")
     Optional<Payment> findByPaymentIdForUpdate(@Param("paymentId") String paymentId);
 
+    Optional<Payment> findByReservationId(Long reservationId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM Payment p WHERE p.reservation.id = :reservationId " +
-            "AND p.status <> com.acc.gazua.domain.payment.entity.PaymentStatus.READY")
-    Optional<Payment> findSettledByReservationIdForUpdate(@Param("reservationId") Long reservationId);
-
-    @Query("SELECT p FROM Payment p JOIN FETCH p.reservation r JOIN FETCH r.room " +
-            "WHERE r.id = :reservationId " +
-            "AND p.status <> com.acc.gazua.domain.payment.entity.PaymentStatus.READY")
-    Optional<Payment> findSettledByReservationId(@Param("reservationId") Long reservationId);
-
-    Optional<Payment> findFirstByReservation_IdAndStatusOrderByIdDesc(Long reservationId,PaymentStatus status);
+    @Query("SELECT p from Payment p WHERE p.reservation.id = :reservationId")
+    Optional<Payment> findByReservationIdForUpdate(@Param("reservationId") Long reservationId);
 
     @Query("SELECT p from Payment p WHERE p.paymentId = :paymentId")
     Optional<Payment> findByPaymentId(@Param("paymentId") String paymentId);
+
 
     @Query("SELECT p.paymentId FROM Payment p " +
             "WHERE p.status = com.acc.gazua.domain.payment.entity.PaymentStatus.REFUND_REQUESTED " +

@@ -11,6 +11,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Table(indexes = @Index(name = "idx_notification_created_at",columnList = "created_at"))
 public class Notification extends BaseTimeEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notification_id")
