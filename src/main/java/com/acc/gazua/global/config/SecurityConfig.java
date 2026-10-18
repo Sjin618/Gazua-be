@@ -4,6 +4,7 @@ import com.acc.gazua.global.security.exception.JwtAccessDeniedHandler;
 import com.acc.gazua.global.security.exception.JwtAuthenticationEntryPoint;
 import com.acc.gazua.global.security.filter.JwtFilter;
 import com.acc.gazua.global.security.provider.JwtProvider;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
@@ -69,6 +70,8 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        //SSE 연결이 끝날 때의 비동기 디스패치 - 첫 요청에서 이미 인증을 통과했기 때문에, 다시 인증하지않음
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/api/accommodation/*/like").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/accommodation/*/review").permitAll()
                         .requestMatchers("/api/accommodation/*/review", "/api/accommodation/*/review/**").authenticated()

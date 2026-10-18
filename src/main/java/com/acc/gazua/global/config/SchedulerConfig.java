@@ -13,7 +13,7 @@ public class SchedulerConfig {
     @Bean
     public TaskScheduler taskScheduler(){
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(3);
+        scheduler.setPoolSize(4);
         scheduler.setThreadNamePrefix("gazua-sched-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true); //종료 시 실행 중인 작업을 인터럽트하지 않는다.
         //위 설정만으로는 대기 시간이 0이다. 이 값이 있어야 실제로 기다린다.

@@ -12,6 +12,7 @@ import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.dto.CursorPage;
 import com.acc.gazua.global.security.util.CookieUtils;
 import com.acc.gazua.global.security.details.CustomUserDetails;
+import com.acc.gazua.global.sse.SseEmitterRegistry;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -32,6 +33,7 @@ public class UserController {
     private final UserService userService;
     private final LikeService likeService;
     private final CookieUtils cookieUtils;
+    private final SseEmitterRegistry sseEmitterRegistry;
 
     //회원 가입
     @PostMapping("/signup")
@@ -51,6 +53,8 @@ public class UserController {
 
         userService.withdraw(user.getUserId());
 
+        //탈퇴 시 모든 SSE 연결을 종료함
+        sseEmitterRegistry.disconnectAll(user.getUserId());
 
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
     }

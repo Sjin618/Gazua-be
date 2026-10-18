@@ -18,6 +18,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.ErrorResponseException;
@@ -37,6 +39,16 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /* ===================== SSE 비동기 예외 ===================== */
+
+    //SSE 연결이 끊기거나 타임아웃된 경우 - 응답을 더 쓸 수 없으므로 아무것도 하지 않는다
+    @ExceptionHandler({AsyncRequestNotUsableException.class,
+            AsyncRequestTimeoutException.class})
+    public void handleAsyncRequestClosed(Exception e) {
+        log.debug("비동기 요청 종료 - {}", e.getMessage());
+    }
+
 
     /* ===================== 비즈니스 예외 ===================== */
 

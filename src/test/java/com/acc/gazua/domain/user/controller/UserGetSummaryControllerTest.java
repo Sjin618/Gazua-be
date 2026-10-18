@@ -11,6 +11,7 @@ import com.acc.gazua.global.security.exception.JwtAccessDeniedHandler;
 import com.acc.gazua.global.security.exception.JwtAuthenticationEntryPoint;
 import com.acc.gazua.global.security.provider.JwtProvider;
 import com.acc.gazua.global.security.util.CookieUtils;
+import com.acc.gazua.global.sse.SseEmitterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,9 @@ public class UserGetSummaryControllerTest {
     // SecurityConfig 가 JwtFilter 를 만들 때 필요
     @MockitoBean
     JwtProvider jwtProvider;
+
+    @MockitoBean
+    SseEmitterRegistry sseEmitterRegistry;
 
     private static CustomUserDetails loginUser(){
         return new CustomUserDetails(USER_ID,"ROLE_USER");
