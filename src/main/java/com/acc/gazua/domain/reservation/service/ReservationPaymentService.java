@@ -196,7 +196,7 @@ public class ReservationPaymentService {
     }
 
     private LocalDateTime toLocalDateTIme(Instant instant) {
-        return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneId.of("Asia/Seoul"));
+        return instant == null ? null : LocalDateTime.ofInstant(instant, clock.getZone());
     }
 
     //스케줄러 만료와 결제 시점이 겹치면 예상치 못한 에러가 발생하기에 항상 잠금 읽기로 가져온다.

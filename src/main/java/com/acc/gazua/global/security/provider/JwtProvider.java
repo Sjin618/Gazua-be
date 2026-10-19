@@ -19,7 +19,9 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneId;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -29,21 +31,33 @@ import java.util.UUID;
 @Slf4j
 public class JwtProvider {
 
-    @Value("${JWT_SECRET}")
-    private String salt;
+    private final String salt;
 
-    @Value("${JWT_EXPIRATION_ACCESS}")
-    private long accessExpirationTime;
+    private final long accessExpirationTime;
 
-    @Value("${JWT_EXPIRATION_REFRESH}")
-    private long refreshExpirationTime;
+    private final long refreshExpirationTime;
+
+    private final Clock clock;
 
     private SecretKey secretKey;
 
-    //HS256 최소 키 길이 (256bit)
     private static final int MIN_SECRET_BYTES = 32;
 
     public static final String GRANT_TYPE = "Bearer";
+
+    public JwtProvider(Clock clock,
+                       @Value("${JWT_SECRET}") String salt,
+                       @Value("${JWT_EXPIRATION_ACCESS}") long accessExpirationTime,
+                       @Value("${JWT_EXPIRATION_REFRESH}") long refreshExpirationTime) {
+
+        this.salt = salt;
+        this.accessExpirationTime = accessExpirationTime;
+        this.refreshExpirationTime = refreshExpirationTime;
+        this.clock = clock;
+    }
+
+
+    //HS256 최소 키 길이 (256bit)
 
     @PostConstruct
     protected void init(){
@@ -65,13 +79,14 @@ public class JwtProvider {
     }
 
     public String createAccessToken(Long userId,String role){
+        Instant now = clock.instant();
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(userId))
                 .id(UUID.randomUUID().toString())
                 .add("role", role)
                 .add("type","access")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + accessExpirationTime))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(accessExpirationTime)))
                 .build();
         return Jwts.builder()
                 .claims(claims)
@@ -80,21 +95,20 @@ public class JwtProvider {
     }
 
     public RefreshTokenDto createRefreshToken(Long userId){
-        Date expiredDate = new Date(System.currentTimeMillis() + refreshExpirationTime);
+        Instant now = clock.instant();
+        Instant expiresAt = now.plusMillis(refreshExpirationTime);
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(userId))
                 .id(UUID.randomUUID().toString())
                 .add("type","refresh")
-                .issuedAt(new Date())
-                .expiration(expiredDate)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiresAt))
                 .build();
         String refreshToken = Jwts.builder()
                 .claims(claims)
                 .signWith(secretKey)
                 .compact();
-        return new RefreshTokenDto(refreshToken, expiredDate.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime());
+        return new RefreshTokenDto(refreshToken, LocalDateTime.ofInstant(expiresAt,clock.getZone()));
     }
     
 
@@ -102,6 +116,7 @@ public class JwtProvider {
         try{
             return Jwts.parser()
                     .verifyWith(secretKey)
+                    .clock(() -> Date.from(clock.instant()))
                     .clockSkewSeconds(30)
                     .build()
                     .parseSignedClaims(token)

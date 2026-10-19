@@ -22,12 +22,14 @@ public class Accommodation {
     @Column(name = "accommodation_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     private User host; //숙소 주인
 
     private String name; //숙소 이름
 
-    private String address; // 숙소 주소
+    private String address; // 숙소 도로명 주소
+
+    private String zipcode; // 숙소 우편번호
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "region_id", nullable = false)
@@ -56,8 +58,9 @@ public class Accommodation {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
-    @Builder.Default
-    private CancellationPolicyType cancellationPolicy = CancellationPolicyType.MODERATE; //숙소 환불 정책
+    private CancellationPolicyType cancellationPolicy; //숙소 환불 정책
+
+    private String contactNumber; //숙소 대표 전화번호
 
     public void changeCancellationPolicy(CancellationPolicyType policy) {
         this.cancellationPolicy = policy;

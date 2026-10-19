@@ -12,8 +12,12 @@ import com.acc.gazua.domain.accommodation.repository.AccommodationRepository;
 import com.acc.gazua.domain.accommodationimage.repository.AccommodationImageRepository;
 import com.acc.gazua.domain.policy.entity.CancellationPolicyType;
 import com.acc.gazua.domain.policy.service.CancellationPolicyResolver;
+import com.acc.gazua.domain.region.entity.Region;
+import com.acc.gazua.domain.region.exception.RegionException;
+import com.acc.gazua.domain.region.repository.RegionRepository;
 import com.acc.gazua.domain.roominventory.dto.AvailableRoomDto;
 import com.acc.gazua.domain.roominventory.repository.RoomInventoryRepository;
+import com.acc.gazua.domain.user.entity.Role;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
@@ -39,6 +43,8 @@ public class AccommodationService {
     private final UserRepository userRepository;
     private final RoomInventoryRepository roomInventoryRepository;
     private final AccommodationImageRepository accommodationImageRepository;
+    private final RegionRepository regionRepository;
+
     private final JsonCursorUtils jsonCursorUtils;
     private final CancellationPolicyResolver policyResolver;
 
@@ -112,18 +118,37 @@ public class AccommodationService {
     }
 
     @Transactional
-    public void registerAccommodation(AccommodationRegisterRequest registerRequest){
-        User host = userRepository.findById(registerRequest.getHostId())
+    public Long registerAccommodation(AccommodationRegisterRequest request){
+        Long hostId = request.hostId();
+
+        User host = userRepository.findById(hostId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        if(host.isDeleted()){
+            throw new UserException(ErrorCode.DELETED_USER);
+        }
+        if(host.getRole() != Role.HOST){
+            throw new UserException(ErrorCode.NOT_HOST_USER);
+        }
+
+        Region region = regionRepository.findByRegionCode(request.regionCode())
+                .orElseThrow(() -> new RegionException(ErrorCode.REGION_NOT_FOUND));
 
         Accommodation accommodation = Accommodation.builder()
                 .host(host)
-                .name(registerRequest.getName())
-                .type(registerRequest.getType())
-                .address(registerRequest.getAddress())
+                .name(request.name())
+                .type(request.type())
+                .address(request.address())
+                .zipcode(request.zipcode())
+                .description(request.description())
+                .contactNumber(request.contactNumber())
+                .cancellationPolicy(policyResolver.getOrDefault(request.cancellationPolicy(), request.type()))
+                .region(region)
                 .build();
 
-        accommodationRepository.save(accommodation);
+        Accommodation savedAccommodation = accommodationRepository.save(accommodation);
+
+        return savedAccommodation.getId();
     }
 
     //숙소 상세 조회

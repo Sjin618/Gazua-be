@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
+import java.time.Clock;
 
 import static com.acc.gazua.global.portone.PortOneClient.*;
 
@@ -22,6 +22,8 @@ public class PaymentReconciler {
     private final PaymentRepository paymentRepository;
     private final PortOneClient portOneClient;
     private final ReservationPaymentService reservationPaymentService;
+
+    private final Clock clock;
 
     public boolean reconcile(String paymentId) {
         Payment payment = paymentRepository.findByPaymentId(paymentId).orElse(null);
@@ -78,7 +80,7 @@ public class PaymentReconciler {
                 return false;
             }
 
-            reservationPaymentService.applyCancelled(paymentId, Instant.now(), reason, refundTotal, fully);
+            reservationPaymentService.applyCancelled(paymentId, clock.instant(), reason, refundTotal, fully);
             log.info("환불 재요청 성공 - paymentId={}. amount={}", paymentId, refundTotal);
 
             return true;

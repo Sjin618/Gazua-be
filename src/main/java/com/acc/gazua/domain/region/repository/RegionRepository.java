@@ -3,6 +3,7 @@ package com.acc.gazua.domain.region.repository;
 import com.acc.gazua.domain.region.entity.Region;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,5 +11,9 @@ import java.util.Optional;
 @Repository
 public interface RegionRepository extends JpaRepository<Region, Long> {
     @Query("SELECT r FROM Region r WHERE r.regionCode = :regionCode AND r.sigunguCode = :sigunguCode")
-    Optional<Region> findByRegionCodeAndSigunguCode(String regionCode,String sigunguCode);
+    Optional<Region> findByRegionCodeAndSigunguCode(@Param("regionCode") String regionCode,
+                                                    @Param("sigunguCode") String sigunguCode);
+
+    @Query("SELECT r FROM Region r WHERE r.regionCode = :regionCode")
+    Optional<Region> findByRegionCode(String regionCode);
 }

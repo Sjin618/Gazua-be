@@ -20,6 +20,12 @@ public class CancellationPolicyResolver {
         return defaultOf(accommodation.getType());
     }
 
+    public CancellationPolicyType getOrDefault(CancellationPolicyType type,AccommodationType accommodationType) {
+        if(type != null) return type;
+
+        return defaultOf(accommodationType);
+    }
+
     //숙소가 정잭을 지정하지 않았을 때의 폴백
     private CancellationPolicyType defaultOf(AccommodationType type) {
         if (type == null) {

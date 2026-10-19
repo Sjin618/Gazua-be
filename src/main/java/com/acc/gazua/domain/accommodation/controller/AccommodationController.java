@@ -9,6 +9,7 @@ import com.acc.gazua.global.dto.ApiResponse;
 import com.acc.gazua.global.dto.CursorPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,10 +39,9 @@ public class AccommodationController {
     //숙소 등록
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> registerAccommodation(@RequestBody AccommodationRegisterRequest registerRequest){
-        accommodationService.registerAccommodation(registerRequest);
-
-        return ResponseEntity.ok(ApiResponse.success("숙소 등록에 성공하였습니다."));
+    public ResponseEntity<ApiResponse<Long>> registerAccommodation(@Valid @RequestBody AccommodationRegisterRequest registerRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(accommodationService.registerAccommodation(registerRequest), "숙소 등록에 성공하였습니다."));
     }
 
 }

@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.Clock;
 
 import static com.acc.gazua.global.portone.PortOneClient.*;
 
@@ -21,6 +21,8 @@ import static com.acc.gazua.global.portone.PortOneClient.*;
 public class PaymentSyncService {
     private final PortOneClient portOneClient;
     private final ReservationPaymentService reservationPaymentService;
+
+    private final Clock clock;
 
 
     //결제 상태 동기화의 단일 진입점
@@ -85,7 +87,7 @@ public class PaymentSyncService {
             log.warn("포트원 서버 오류 환불 요청 실패 - 상태 유지 - paymentId={}", snapshot.paymentId(), e);
             return PaymentSyncResult.PORTONE_UNAVAILABLE;
         }
-        reservationPaymentService.applyCancelled(snapshot.paymentId(), Instant.now(), reason, snapshot.paidTotal(), true);
+        reservationPaymentService.applyCancelled(snapshot.paymentId(), clock.instant(), reason, snapshot.paidTotal(), true);
         return result;
     }
 

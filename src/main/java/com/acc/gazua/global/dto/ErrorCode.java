@@ -30,6 +30,7 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(409,"U002","이미 존재하는 이메일입니다."),
     DELETED_USER(400,"U003","탈퇴한 계정입니다."),
     USER_NOT_FOUND(404,"U004","존재하지 않는 회원입니다."),
+    NOT_HOST_USER(400,"U005","숙소 주인으로 지정할 수 없는 회원입니다."),
 
     //숙소 관련 에러
     ACCOMMODATION_NOT_FOUND(404,"A001","존재하지 않는 숙소입니다."),
@@ -74,6 +75,9 @@ public enum ErrorCode {
 
     //알림 관련 에러
     NOTIFICATION_NOT_FOUND(404,"N001","존재하지 않는 알림입니다."),
+
+    //지역 코드 관련 에러
+    REGION_NOT_FOUND(400,"RG001","존재하지 않는 지역 코드입니다."),
 
 
     //Jwt 관련 에러
