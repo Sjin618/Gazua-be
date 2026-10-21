@@ -52,6 +52,7 @@ public enum ErrorCode {
     RESERVATION_NOT_CANCELABLE(400,"R003","취소할 수 없는 예약입니다"),
     INVALID_RESERVATION_STATUS(400,"R004","알 수 없는 상태입니다."),
     RESERVATION_ALREADY_STARTED(400,"R005","이미 이용이 시작된 예약은 취소할 수 없습니다."),
+    ALREADY_CONFIRMED(400,"R006","이미 완료된 예약입니다."),
 
     //방 재고 관련 에러
     OUT_OF_STOCK(400,"RI001","해당 날짜에 방 재고가 없습니다."),

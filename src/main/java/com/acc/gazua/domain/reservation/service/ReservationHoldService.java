@@ -21,6 +21,8 @@ import com.acc.gazua.domain.user.exception.UserException;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.entity.CheckDateTime;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,9 @@ public class ReservationHoldService {
     private final RoomInventoryService roomInventoryService;
     private final CancellationPolicyResolver policyResolver;
     private final Clock clock;
+
+    private final EntityManager em;
+
     private static final Duration HOLD_DURATION = Duration.ofMinutes(20);
 
     //기존 홀드 재사용 여부를 조회한다, 만들어져 있던 가예약이 있다면 map이 실행된다.
@@ -57,7 +62,12 @@ public class ReservationHoldService {
         //스케줄러는 5분 주기라 만료 시각은 지났지만 아직 만료 처리 안된 홀드가 항상 존재한다.
         //그대로 돌려주면 사용자가 결제한 직후 스케줄러가 만료 처리해, 결제 이후 자동 환불 처리된다.(/confirm)
         if(reservation.isHoldExpired(LocalDateTime.now(clock))) {
-            expireHold(reservation.getId()); //같은 트랜잭션에서 회수 - 락 + isPending 재확인 포함
+            //이미 적재된 Reservation 객체를 다시 적재해준다 - applyPaid() 가 CONFIRM 으로 변경할 수 있기 때문
+            em.refresh(reservation, LockModeType.PESSIMISTIC_WRITE);
+            if(!expire(reservation)) {             //같은 트랜잭션에서 회수 - 락 + isPending 재확인 포함
+                //PENDING 상태가 아닌 예약은 다시 만들지 않고, 예외를 던진다
+                throw new ReservationException(ErrorCode.ALREADY_CONFIRMED);
+            }
             return Optional.empty();         //createHold 로 새로 만들게 한다.
         }
 
@@ -121,10 +131,14 @@ public class ReservationHoldService {
 
     //스케쥴러 호출 메서드, 시간이 지난 예약을 만료 처리한다.
     public boolean expireHold(Long reservationId){
-        Reservation reservation = reservationRepository.findByIdForUpdate(reservationId).orElse(null);
+        //락을 잡기 전, 예약이 확정됐을 수도 있으므로 재확인
+        return reservationRepository.findByIdForUpdate(reservationId)
+                .map(this::expire)
+                .orElse(false);
+    }
 
-        //락을 잡은 사이 예약이 확정됐을 수도 있으므로 재확인
-        if(reservation == null || !reservation.isPending()) return false;
+    private boolean expire(Reservation reservation) {
+        if(!reservation.isPending()) return false;
 
         reservation.expireReservation();
         roomInventoryService.increaseRoomInventoryCount(reservation.getCheckDateTime(), reservation.getRoom());
