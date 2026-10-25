@@ -1,5 +1,6 @@
 package com.acc.gazua.domain.reservation.repository;
 
+import com.acc.gazua.domain.reservation.dto.ExpiryReservation;
 import com.acc.gazua.domain.reservation.dto.ReservationGetResponse;
 import com.acc.gazua.domain.reservation.entity.Reservation;
 import com.acc.gazua.domain.reservation.entity.ReservationStatus;
@@ -48,11 +49,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r  JOIN FETCH r.user WHERE r.dedupKey = :dedupKey")
     Optional<Reservation> findByDedupKey(@Param("dedupKey") String dedupKey);
 
-    @Query("SELECT r.id FROM Reservation r " +
+    @Query("SELECT new com.acc.gazua.domain.reservation.dto.ExpiryReservation(r.id,p.paymentId) " +
+            "FROM Reservation r JOIN Payment p on p.reservation = r " +
             "WHERE r.status = com.acc.gazua.domain.reservation.entity.ReservationStatus.PENDING " +
             "AND r.holdExpiresAt <= :now " +
-            "ORDER BY r.id ASC")
-    List<Long> findExpiredHoldIds(@Param("now") LocalDateTime now, Pageable pageable); //ReservationHoldExpiryScheduler에서 호출, 시간이 지난 예약 만료 처리
+            "ORDER BY r.holdExpiresAt ASC")
+    List<ExpiryReservation> findExpiredHold(@Param("now") LocalDateTime now, Pageable pageable); //ReservationHoldExpiryScheduler 에서 호출, 시간이 지난 예약 만료 처리
 
     // JOIN FETCH 없이 잠근다 — fetch join하면 MySQL이 room 행까지 FOR UPDATE로 잠근다
     @Lock(LockModeType.PESSIMISTIC_WRITE)

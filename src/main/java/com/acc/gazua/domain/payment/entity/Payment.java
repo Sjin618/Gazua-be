@@ -52,7 +52,7 @@ public class Payment extends BaseTimeEntity {
     private CancellationPolicyType appliedPolicy; //적용된 환불 정책
 
     public void confirmPayment(LocalDateTime paidAt, String payMethod, String pgProvider) {
-        this.status = PaymentStatus.COMPLETED;
+        this.status = PaymentStatus.PAID;
         this.paidAt = paidAt;
         this.payMethod = payMethod;
         this.pgProvider = pgProvider;

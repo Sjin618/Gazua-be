@@ -1,10 +1,11 @@
 package com.acc.gazua.domain.payment.service;
 
 public enum PaymentSyncResult {
-    CONFIRMED,                  // 이번 호출로 확정됨
-    CANCELLED,                  // 취소/환불 반영됨
+    PAID,                       // 결제가 확정됨
+    REFUNDED,                   // 환불 반영됨
+    REFUND_IN_PROGRESS,         // 환불 진행 중
     FAILED,                     // PG에서 결제 실패로 확정
-    ALREADY_CONFIRMED,          // 이미 확정됨
+    ALREADY_PAID,               // 이미 확정됨
     NOT_PAID_YET,               // 아직 미확정 (결제창 미완료, 가상계좌 입금대기 등)
     AMOUNT_MISMATCH,            // 위변조 의심 → 환불 처리됨
     UNKNOWN_PAYMENT,            // 우리 DB에 없는 paymentId

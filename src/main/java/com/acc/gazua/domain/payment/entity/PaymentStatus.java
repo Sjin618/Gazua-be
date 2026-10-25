@@ -2,7 +2,7 @@ package com.acc.gazua.domain.payment.entity;
 
 public enum PaymentStatus {
     READY,              //결제 전
-    COMPLETED,          //결제 완료
+    PAID,          //결제 완료
     REFUND_REQUESTED,   //PG 취소 요청 직전(응답 유실 대비 기록)
     PARTIAL_REFUND,     //위약금 공제 후 부분 환불
     REFUND,             //전액 환불

@@ -26,7 +26,7 @@ public class PaymentSyncService {
 
 
     //결제 상태 동기화의 단일 진입점
-    //웹훅 / confirm API / 스케쥴러 모두 이 메서드를 호출
+    //웹훅 / /confirm API / 스케쥴러 모두 이 메서드를 호출
     public PaymentSyncResult syncPayment(String paymentId){
 
         PortOnePaymentSnapshot snapshot;

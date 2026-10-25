@@ -37,7 +37,7 @@ public class ReservationController {
         );
     }
 
-    //PortOne 동기화 API
+    //결제가 완료된 후, 결제를 PAID 상태로 만든다
     //사용자 결제 후 프론트에서 호출해야 한다.
     @PostMapping("/confirm")
     public ResponseEntity<ApiResponse<Void>> confirmReservation(@AuthenticationPrincipal CustomUserDetails user,
@@ -45,7 +45,7 @@ public class ReservationController {
         PaymentSyncResult result = reservationFacade.confirmReservation(request, user.getUserId());
         //실패 상태는 예외로 올려 GlobalExceptionHandler 가 ErrorResponse 로 변환한다
         return switch(result){
-            case CONFIRMED, ALREADY_CONFIRMED ->
+            case PAID, ALREADY_PAID ->
                     ResponseEntity.ok(ApiResponse.success("예약이 확정되었습니다."));
 
             case NOT_PAID_YET ->
@@ -57,7 +57,7 @@ public class ReservationController {
             case AMOUNT_MISMATCH ->
                     throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
 
-            case CANCELLED ->
+            case REFUNDED,REFUND_IN_PROGRESS ->
                     throw new PaymentException(ErrorCode.PAYMENT_CANCELLED);
 
             case FAILED ->

@@ -3,6 +3,8 @@ package com.acc.gazua.domain.reservation.service;
 import com.acc.gazua.domain.payment.entity.Payment;
 import com.acc.gazua.domain.payment.entity.PaymentStatus;
 import com.acc.gazua.domain.payment.repository.PaymentRepository;
+import com.acc.gazua.domain.payment.service.PaymentSyncResult;
+import com.acc.gazua.domain.payment.service.PaymentSyncService;
 import com.acc.gazua.global.portone.PortOneClient;
 import com.acc.gazua.global.portone.exception.PortOneConflictException;
 import com.acc.gazua.global.portone.exception.PortOneRequestException;
@@ -22,6 +24,7 @@ public class PaymentReconciler {
     private final PaymentRepository paymentRepository;
     private final PortOneClient portOneClient;
     private final ReservationPaymentService reservationPaymentService;
+    private final PaymentSyncService paymentSyncService;
 
     private final Clock clock;
 
@@ -69,9 +72,8 @@ public class PaymentReconciler {
                 portOneClient.refundPayment(paymentId, fully ? null : refundTotal.longValue(), reason, payment.getPrice().longValue());
             } catch (PortOneConflictException e) {
                 //getPayment 이후 PG 가 바뀌었다 ( 관리자 환불, 늦게 처리된 우리 요청 등등)
-                //REFUND_REQUESTED 로 남겨두면 다음 주기 때 getPayment()로 PG 와 상태가 동기화된다.
-                log.warn("PG 취소 거부 - 다음 주기에 PG 상태로 동기화 - paymentId={}", paymentId);
-                return false;
+                //어디선가 환불이 이미 처리되었음
+                log.warn("PG 취소 거부 - 이미 환불 처리된 결제 - paymentId={}", paymentId);
             } catch (PortOneRequestException e) {
                 log.error("PG 취소 재요청 영구 실패 - 수동 확인 필요 - paymentId={}", paymentId, e);
                 return false;
@@ -80,10 +82,22 @@ public class PaymentReconciler {
                 return false;
             }
 
-            reservationPaymentService.applyCancelled(paymentId, clock.instant(), reason, refundTotal, fully);
-            log.info("환불 재요청 성공 - paymentId={}. amount={}", paymentId, refundTotal);
+            PaymentSyncResult result = paymentSyncService.syncPayment(paymentId);
+            switch(result){
+              case REFUNDED -> {
+                  log.info("환불 처리된 결제 - paymentId={}, amount={}", paymentId, refundTotal);
+                  return true;
+              }
 
-            return true;
+              case PORTONE_UNAVAILABLE, MANUAL_REVIEW_REQUIRED -> {
+                  log.warn("PG 확인 불가 - 동기화 보류, 다음 주기 재시도 - paymentId={}", paymentId);
+                  return false;
+              }
+              default -> {
+                  log.warn("환불 처리가 안된 결제 - 결과={}",result);
+                  return false;
+              }
+            }
         }
 
         log.error("예상치 못한 PG 상태 - 수동 확인 필요 - paymentId={}, status={}", paymentId, snapshot.status());

@@ -32,7 +32,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -64,11 +63,14 @@ public class ReservationHoldService {
         if(reservation.isHoldExpired(LocalDateTime.now(clock))) {
             //이미 적재된 Reservation 객체를 다시 적재해준다 - applyPaid() 가 CONFIRM 으로 변경할 수 있기 때문
             em.refresh(reservation, LockModeType.PESSIMISTIC_WRITE);
-            if(!expire(reservation)) {             //같은 트랜잭션에서 회수 - 락 + isPending 재확인 포함
-                //PENDING 상태가 아닌 예약은 다시 만들지 않고, 예외를 던진다
-                throw new ReservationException(ErrorCode.ALREADY_CONFIRMED);
-            }
-            return Optional.empty();         //createHold 로 새로 만들게 한다.
+
+            //만료된, 되어야할 예약은 createHold()로 새로 만들게 한다.
+            //확정된 예약은 이미 확정되었다는 예외를 던진다.
+            return switch(reservation.getStatus()){
+                case PENDING -> {expire(reservation); yield Optional.empty();} //같은 트랜잭션에서 방 회수
+                case CONFIRM, COMPLETED -> throw new ReservationException(ErrorCode.RESERVATION_ALREADY_CONFIRMED);
+                case CANCELLED, EXPIRED -> Optional.empty();
+            };
         }
 
         //createHold() 가 예약과 결제를 동시 생성하기 때문에, 예약이 있다면 결제도 있음
@@ -132,17 +134,16 @@ public class ReservationHoldService {
     //스케쥴러 호출 메서드, 시간이 지난 예약을 만료 처리한다.
     public boolean expireHold(Long reservationId){
         //락을 잡기 전, 예약이 확정됐을 수도 있으므로 재확인
-        return reservationRepository.findByIdForUpdate(reservationId)
-                .map(this::expire)
-                .orElse(false);
+        Optional<Reservation> target = reservationRepository.findByIdForUpdate(reservationId)
+                .filter(Reservation::isPending);
+
+        target.ifPresent(this::expire);
+        return target.isPresent();
     }
 
-    private boolean expire(Reservation reservation) {
-        if(!reservation.isPending()) return false;
-
+    private void expire(Reservation reservation) {
         reservation.expireReservation();
         roomInventoryService.increaseRoomInventoryCount(reservation.getCheckDateTime(), reservation.getRoom());
-        return true;
     }
 
     private String makePaymentId(Long roomId){

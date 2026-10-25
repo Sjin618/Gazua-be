@@ -44,6 +44,7 @@ public class ReservationFacade {
                 .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
         payment.getReservation().equalsUser(userId);
 
+        //먼저 DB와 PortOne 의 결제 상태를 동기화하기 위해 환불 로직 전에 호출한다.
         PaymentSyncResult synced = paymentSyncService.syncPayment(payment.getPaymentId());
         if(synced == PaymentSyncResult.PORTONE_UNAVAILABLE)
             throw new PaymentException(ErrorCode.PAYMENT_CONFIRM_DELAYED);

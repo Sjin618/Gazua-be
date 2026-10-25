@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+
 /**
  * 결제와 연관된 메서드들을 모아둔 서비스 클래스
  */
@@ -75,10 +75,10 @@ public class ReservationPaymentService {
 
         log.info("결제 확정 - paymentId={}, reservationId={}",
                 snapshot.paymentId(), reservation.getId());
-        return PaymentSyncResult.CONFIRMED;
+        return PaymentSyncResult.PAID;
     }
 
-    //예약 취소 및 환불 로직 — READY(결제됐지만 확정을 기록하기 전의 결제) COMPLETED(결제 완료)든 재고는 동일하게 복구
+    //예약 취소 및 환불 로직 — READY(결제됐지만 확정을 기록하기 전의 결제) PAID(결제 완료)든 재고는 동일하게 복구
     public PaymentSyncResult applyCancelled(String paymentId, Instant cancelledAt, String reason,
                                             long refundTotal, boolean fullyCancelled) {
         Payment payment = paymentRepository.findByPaymentIdForUpdate(paymentId).orElse(null);
@@ -101,7 +101,9 @@ public class ReservationPaymentService {
 
         Reservation reservation = lockReservation(payment);
         ReservationStatus before = reservation.getStatus();
-        payment.completeRefund(toLocalDateTIme(cancelledAt), refundTotal, reason, fullyCancelled);
+
+        String finalReason = payment.getStatus() == PaymentStatus.REFUND_REQUESTED ? payment.getCancelReason() : reason;
+        payment.completeRefund(toLocalDateTIme(cancelledAt), refundTotal, finalReason, fullyCancelled);
 
         //환불 로직 도중에 만료 처리 스케쥴러가 동작해서 재고를 풀 수도 있기 때문에 예약이 재고를 잡고 있는지 확인한다.
         if(reservation.holdsInventory()){
@@ -114,8 +116,8 @@ public class ReservationPaymentService {
 
 
         log.info("예약 취소 - paymentId={}, reservationId={}, reason={}",
-                paymentId, reservation.getId(), reason);
-        return PaymentSyncResult.CANCELLED;
+                paymentId, reservation.getId(), finalReason);
+        return PaymentSyncResult.REFUNDED;
     }
 
     //환불 0원 - PG 호출 없이 예약만 취소하고 재고를 푼다
@@ -174,8 +176,9 @@ public class ReservationPaymentService {
         Reservation reservation = payment.getReservation();
         reservation.equalsUser(userId); //본인 확인
 
+        //PAID 만 환불 가능, 나머지 상태는 통과 불가
         switch (payment.getStatus()) {
-            case COMPLETED -> {}
+            case PAID -> {}
             case REFUND,PARTIAL_REFUND,FORFEITED -> throw new PaymentException(ErrorCode.ALREADY_REFUNDED);
             case REFUND_REQUESTED -> throw new PaymentException(ErrorCode.CANCEL_IN_PROGRESS);
             case READY, FAILED -> throw new PaymentException(ErrorCode.PAYMENT_NOT_CANCELABLE);
@@ -216,8 +219,9 @@ public class ReservationPaymentService {
 
     private PaymentSyncResult resultOf(Payment payment) {
         return switch(payment.getStatus()){
-            case COMPLETED -> PaymentSyncResult.ALREADY_CONFIRMED;
-            case REFUND, REFUND_REQUESTED, PARTIAL_REFUND, FORFEITED -> PaymentSyncResult.CANCELLED;
+            case PAID -> PaymentSyncResult.ALREADY_PAID;
+            case REFUND, PARTIAL_REFUND, FORFEITED -> PaymentSyncResult.REFUNDED;
+            case REFUND_REQUESTED -> PaymentSyncResult.REFUND_IN_PROGRESS;
             case FAILED -> PaymentSyncResult.FAILED;
             case READY -> PaymentSyncResult.NOT_PAID_YET;
         };
