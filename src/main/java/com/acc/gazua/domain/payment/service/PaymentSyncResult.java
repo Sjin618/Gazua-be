@@ -3,7 +3,8 @@ package com.acc.gazua.domain.payment.service;
 public enum PaymentSyncResult {
     PAID,                       // 결제가 확정됨
     REFUNDED,                   // 환불 반영됨
-    REFUND_IN_PROGRESS,         // 환불 진행 중
+    REFUND_PENDING,             // 환불 진행 중
+    REFUND_FAILED,              // 환불 요청 거절
     FAILED,                     // PG에서 결제 실패로 확정
     ALREADY_PAID,               // 이미 확정됨
     NOT_PAID_YET,               // 아직 미확정 (결제창 미완료, 가상계좌 입금대기 등)

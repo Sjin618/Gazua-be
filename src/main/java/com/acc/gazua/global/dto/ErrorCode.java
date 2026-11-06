@@ -72,6 +72,8 @@ public enum ErrorCode {
     PAYMENT_MANUAL_REVIEW(500,"P009","결제 처리에 문제가 발생했습니다. 확인 후 안내드리겠습니다."),
     CANCEL_IN_PROGRESS(409, "P010", "환불이 진행 중에 있습니다."),
     PAYMENT_CANCELLED(409, "P011", "취소 또는 환불된 결제입니다. 예약 내역에서 확인해주세요."),
+    REFUND_FAILED(502,"P012","환불 요청이 처리되지 않았습니다. 잠시 후 다시 시도해주세요."),
+    REFUND_NOT_FOUND(404,"P013","존재하지 않는 환불 요청입니다."),
 
 
     //알림 관련 에러

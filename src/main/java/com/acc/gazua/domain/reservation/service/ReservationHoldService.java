@@ -131,7 +131,7 @@ public class ReservationHoldService {
         return toInitResponse(paymentId, reservation, user);
     }
 
-    //스케쥴러 호출 메서드, 시간이 지난 예약을 만료 처리한다.
+    //시간이 지난 예약을 만료 처리한다. - 가예약 만료 스케쥴러, 금액 불일치 자동 환불에서 호출
     public boolean expireHold(Long reservationId){
         //락을 잡기 전, 예약이 확정됐을 수도 있으므로 재확인
         Optional<Reservation> target = reservationRepository.findByIdForUpdate(reservationId)

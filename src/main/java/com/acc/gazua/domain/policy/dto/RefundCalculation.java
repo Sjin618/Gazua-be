@@ -7,7 +7,7 @@ public record RefundCalculation(
         CancellationPolicyType policy, //적용된 환불 정책
         int refundPercent, //환불된 비율
         int refundAmount, //환불된 금액
-        int cancelFee, //취소 수수료
+        int cancelFee, //위약금
         String appliedReason // POLICY | GRACE_PERIOD
 ) {
     public boolean isNoRefund(){ return refundAmount == 0; }

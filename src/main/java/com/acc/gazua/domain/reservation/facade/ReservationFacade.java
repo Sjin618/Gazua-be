@@ -14,9 +14,6 @@ import com.acc.gazua.domain.reservation.service.ReservationPaymentService;
 import com.acc.gazua.domain.roominventory.exception.RoomInventoryException;
 import com.acc.gazua.global.dto.ErrorCode;
 import com.acc.gazua.global.portone.PortOneClient;
-import com.acc.gazua.global.portone.exception.PortOneConflictException;
-import com.acc.gazua.global.portone.exception.PortOneRequestException;
-import com.acc.gazua.global.portone.exception.PortOneUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,53 +36,21 @@ public class ReservationFacade {
 
     //사용자가 예약 취소를 눌렀을 때 실행되는 환불 메서드
     public RefundCalculation cancel(Long userId, Long reservationId, String reason) {
-        //본인 확인 - OSIV off 라 fetch join 필요
-        Payment payment = paymentRepository.findByReservationIdWithReservationAndUser(reservationId)
-                .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
-        payment.getReservation().equalsUser(userId);
-
-        //먼저 DB와 PortOne 의 결제 상태를 동기화하기 위해 환불 로직 전에 호출한다.
-        PaymentSyncResult synced = paymentSyncService.syncPayment(payment.getPaymentId());
-        if(synced == PaymentSyncResult.PORTONE_UNAVAILABLE)
-            throw new PaymentException(ErrorCode.PAYMENT_CONFIRM_DELAYED);
-        if(synced == PaymentSyncResult.MANUAL_REVIEW_REQUIRED)
-            throw new PaymentException(ErrorCode.PAYMENT_MANUAL_REVIEW);
-
-        //아직 예약 취소와 결제 환불을 확정하지 않음
-        //예약 취소와 결제 환불 준비
-        //검증 + 환불액 확정 + REFUND_REQUESTED 커밋
+        //DB 가 PG 보다 늦은 경우(READY)는 웹훅 / 가예약 만료 스케쥴러가 먼저 확정하므로 여기서 동기화하지 않는다
+        //[TX 1] 본인 확인 + 검증 + 환불액 확정 + Refund(REQUESTED) 커밋 - 0원이면 여기서 종결
         CancelPreparation prep = reservationPaymentService.prepareCancel(reservationId, userId, reason);
-        RefundCalculation calc = prep.calc();
-        String paymentId = prep.paymentId();
+        if(prep.calc().isNoRefund()) return prep.calc();
 
-        //환불 0원이면 PG 호출하지 않음(0원 취소는 거부됨)
-        if(calc.isNoRefund()){
-            reservationPaymentService.applyForfeited(paymentId, reason);
-            return calc;
+        //PG 환불 요청 -> [TX] 응답을 Refund 에 기록
+        PaymentSyncResult result = paymentSyncService.executeRefund(prep.refundId());
+
+        //PG 가 거절 - Refund 는 FAILED 로 닫혔으므로 사용자가 다시 취소할 수 있다
+        if (result == PaymentSyncResult.REFUND_FAILED) {
+            throw new PaymentException(ErrorCode.REFUND_FAILED);
         }
 
-        //PortOne 에 환불 금액과 함께 환불 요청
-        //PG 취소 - 전액이면 amount를 비워 보내 CANCELLED 상태를 받는다
-        Long amount = calc.isFullRefund() ? null : (long) calc.refundAmount();
-        try {
-            portOneClient.refundPayment(paymentId, amount, reason, payment.getPrice().longValue());
-        } catch (PortOneConflictException e) {
-            //sync 이후 PG 가 바뀌었다(관리자 환불 등) - 아래 syncPayment 가 PG 값으로 기록한다
-            log.warn("PG 취소 거부 - PG 상태로 동기화 - paymentId={}", paymentId);
-        } catch (PortOneUnavailableException e) {
-            //REFUND_REQUESTED 로 남아 스케줄러 or 웹훅이 재동기화한다
-            log.warn("PG 취소 요청 실패 - 재동기화 대상 - paymentId={}", paymentId, e);
-            return calc;
-        } catch (PortOneRequestException e) {
-            log.error("포트원 환불 요청 실패 - 수동 조작 필요 - paymentId={}", paymentId, e);
-            return calc;
-        }
-
-        //최종적으로 PortOne과 상태 동기화
-        //confirm과 동일한 단일 진입점으로 상태 확정 + 재고 복구
-        paymentSyncService.syncPayment(paymentId);
-
-        return calc;
+        //PORTONE_UNAVAILABLE / REFUND_PENDING 은 접수로 응답 - 웹훅/재동기화가 마무리한다
+        return prep.calc();
     }
 
     public PaymentSyncResult confirmReservation(ReservationConfirmRequest request, Long userId){

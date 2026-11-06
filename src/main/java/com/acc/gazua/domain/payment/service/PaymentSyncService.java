@@ -1,5 +1,7 @@
 package com.acc.gazua.domain.payment.service;
 
+import com.acc.gazua.domain.payment.dto.RefundCommand;
+import com.acc.gazua.domain.payment.entity.RefundOrigin;
 import com.acc.gazua.domain.reservation.service.ReservationPaymentService;
 import com.acc.gazua.global.portone.PortOneClient;
 import com.acc.gazua.global.portone.exception.PortOneConflictException;
@@ -11,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.util.Optional;
 
 import static com.acc.gazua.global.portone.PortOneClient.*;
 
@@ -49,8 +52,7 @@ public class PaymentSyncService {
             return handlePaid(snapshot);
         }
         if (snapshot.isFullyCancelled() || snapshot.isPartialCancelled()) {
-            return reservationPaymentService.applyCancelled(paymentId, snapshot.cancelledAt(), "취소 정책 적용 환불",
-                    snapshot.refundTotal(), snapshot.isFullyCancelled());
+            return reservationPaymentService.applyPgCancellations(snapshot);
         }
 
         if (snapshot.isFailed()) {
@@ -74,22 +76,44 @@ public class PaymentSyncService {
         if (reason == null) return result;
 
         log.error("자동 환불 진행 - paymentId={}, 사유={}", snapshot.paymentId(), reason);
-        try {
-            portOneClient.refundPayment(snapshot.paymentId(), null, reason + "(으)로 환불 처리되었습니다.", snapshot.paidTotal());
-        } catch (PortOneConflictException e) {
-            //웹훅과 /confirm 이 동시에 와서 다른 쪽이 먼저 전액 환불했다 - 결과가 같으므로 아래에서 전액 환불로 기록
-            log.info("자동 환불 중복 요청 - 이미 처리됨 - paymentId={}", snapshot.paymentId());
-        } catch (PortOneRequestException e) {
-            log.warn("포트원 환불 요청 실패 - 수동 조작 필요 - paymentId={}", snapshot.paymentId(), e);
-            return PaymentSyncResult.MANUAL_REVIEW_REQUIRED;
-        } catch (PortOneUnavailableException e) {
-            //포트원 조회 실패는 재시도
-            log.warn("포트원 서버 오류 환불 요청 실패 - 상태 유지 - paymentId={}", snapshot.paymentId(), e);
-            return PaymentSyncResult.PORTONE_UNAVAILABLE;
-        }
-        reservationPaymentService.applyCancelled(snapshot.paymentId(), clock.instant(), reason, snapshot.paidTotal(), true);
-        return result;
+        RefundOrigin origin = result == PaymentSyncResult.AMOUNT_MISMATCH ? RefundOrigin.AMOUNT_MISMATCH : RefundOrigin.EXPIRED;
+        Optional<Long> refundId = reservationPaymentService.requestSystemRefund(snapshot, origin, reason + "(으)로 환불 처리되었습니다.");
+
+        //웹훅 <-> /confim 중 다른 쪽이 이미 환불을 시작했다 - 그쪽이나 재동기화가 마무리한다
+        if(refundId.isEmpty()) return result;
+
+        return switch (executeRefund(refundId.get())) {
+            case REFUNDED, REFUND_PENDING -> result;
+            case REFUND_FAILED -> PaymentSyncResult.MANUAL_REVIEW_REQUIRED; //자동 환불 거절은 사람이 봐야 한다
+            default -> PaymentSyncResult.PORTONE_UNAVAILABLE;
+        };
     }
 
+    //Refund 커밋 이후 PG 에 환불을 요청하고 응답을 Refund 에 기록한다
+    //사용자 취소 / 자동 환불 / 재동기화 재요청이 모두 이 메서드를 쓴다
+    public PaymentSyncResult executeRefund(Long refundId) {
+        RefundCommand cmd = reservationPaymentService.findRefundInProgress(refundId).orElse(null);
+        if(cmd == null) return PaymentSyncResult.REFUNDED; //다른 경로(웹훅 등) 에서 이미 마무리됨
+
+        PortOneCancellation cancellation;
+        try {
+            cancellation = portOneClient.refundPayment(cmd.paymentId(), cmd.amount(), cmd.reason(), cmd.cancellableAmount());
+        } catch (PortOneConflictException e) {
+            //이미 취소됐거나 취소 가능 금액이 바뀌었다 (이전 시도가 성공 / 관리자 환불) - PG 기록으로 맞춘다
+            log.warn("PG 취소 거부 - PG 상태로 동기화 - refundId={}, paymentID={}", refundId, cmd.paymentId());
+            return syncPayment(cmd.paymentId());
+        } catch (PortOneUnavailableException e) {
+            //PG 가 처리했는지 모른다 - REQUESTED 로 남겨 웹훅 / 재동기화 스케쥴러가 마무리한다
+            log.warn("PG 취소 요청 실패 - 재동기화 대상 - refundId={}", refundId, e);
+            return PaymentSyncResult.PORTONE_UNAVAILABLE;
+        } catch (PortOneRequestException e) {
+            //PG 가 요청 자체를 거절 - 환불되지 않았으므로 FAILED 로 닫는다
+            log.error("포트원 환불 요청 거절 - refundId={},", refundId, e);
+            reservationPaymentService.failRefund(cmd.paymentId(), refundId, e.getMessage());
+            return PaymentSyncResult.REFUND_FAILED;
+        }
+
+        return reservationPaymentService.applyRefundResult(cmd.paymentId(), refundId, cancellation);
+    }
 
 }

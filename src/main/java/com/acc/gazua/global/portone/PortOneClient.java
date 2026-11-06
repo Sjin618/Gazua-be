@@ -16,6 +16,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -62,7 +63,8 @@ public class PortOneClient {
                     body.paidAt(),
                     body.cancelledAt(),
                     body.method() == null ? null : body.method().type(),
-                    body.channel() == null ? null : body.channel().pgProvider()
+                    body.channel() == null ? null : body.channel().pgProvider(),
+                    body.cancellations() == null ? List.of() : body.cancellations()
             );
         }catch(HttpClientErrorException.NotFound e){
             // 404 - 아직 결제가 진행이 안됨 재시도 대상이 아님
@@ -81,15 +83,25 @@ public class PortOneClient {
 
 
     //환불
-    public void refundPayment(String paymentId, Long amount, String reason, Long currentCancellableAmount) {
+    public PortOneCancellation refundPayment(String paymentId, Long amount, String reason, Long currentCancellableAmount) {
         try {
-            restTemplate.exchange(
+            ResponseEntity<CancelPaymentResponse> response =
+                    restTemplate.exchange(
                     REFUND_URL,
                     HttpMethod.POST,
                     new HttpEntity<>(new RefundPaymentRequest(amount, reason, currentCancellableAmount), getHeader()),
-                    Void.class,
+                    CancelPaymentResponse.class,
                     paymentId
             );
+
+            CancelPaymentResponse body = response.getBody();
+            if (body == null || body.cancellation == null) {
+                //PG 는 환불을 처리했을 수 있음 - 결과를 모르는 것으로 보고 재동기화에 맡긴다
+
+                throw new PortOneUnavailableException("포트원 취소 응답 본문이 비어있습니다 : " + paymentId);
+            }
+
+            return body.cancellation();
         }catch(HttpClientErrorException.Conflict e){
             //이미 취소된 결제 - 멱등 처리, 이후 syncPayment가 상태를 맞춘다
             log.info("포트원 취소 거부(409) - paymentId={}, body={}", paymentId, e.getResponseBodyAsString());
@@ -113,7 +125,8 @@ public class PortOneClient {
             Instant paidAt,
             Instant cancelledAt,
             String payMethod,
-            String pgProvider
+            String pgProvider,
+            List<PortOneCancellation> cancellations
     ){
         public boolean isPaid(){
             return "PAID".equals(status);}
@@ -127,7 +140,6 @@ public class PortOneClient {
     }
 
     //id가 paymentId
-    public record PortOnePaymentInfo(long paidTotal,String paymentId){}
     public record PortOnePaymentResponse(
             String status,
             String id,
@@ -135,10 +147,29 @@ public class PortOneClient {
             Instant paidAt,
             Instant cancelledAt,
             PaymentMethod method,
-            PaymentChannel channel){}
+            PaymentChannel channel,
+            List<PortOneCancellation> cancellations){}
     public record PaymentAmount(long total, long cancelled) {}
     public record PaymentMethod(String type){}
     public record PaymentChannel(String pgProvider){}
+
+    public record CancelPaymentResponse(PortOneCancellation cancellation){}
+
+    //PortOne 취소 내역 - status : REQUESTED(PG 접수) / SUCCEEDED / FAILED
+    public record PortOneCancellation(
+            String status,
+            String id, //cancellationId
+            String pgCancellationId,
+            long totalAmount,
+            String reason,
+            Instant requestedAt,
+            Instant cancelledAt,
+            String receiptUrl
+    ){
+        public boolean isSucceeded(){return "SUCCEEDED".equals(status);}
+        public boolean isRequested(){return "REQUESTED".equals(status);}
+        public boolean isFailed(){return "FAILED".equals(status);}
+    }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RefundPaymentRequest(Long amount, String reason, Long currentCancellableAmount){}

@@ -57,7 +57,7 @@ public class ReservationController {
             case AMOUNT_MISMATCH ->
                     throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
 
-            case REFUNDED,REFUND_IN_PROGRESS ->
+            case REFUNDED, REFUND_PENDING ->
                     throw new PaymentException(ErrorCode.PAYMENT_CANCELLED);
 
             case FAILED ->
@@ -66,7 +66,7 @@ public class ReservationController {
             case RESERVATION_EXPIRED ->
                     throw new PaymentException(ErrorCode.RESERVATION_EXPIRED);
 
-            case MANUAL_REVIEW_REQUIRED ->
+            case MANUAL_REVIEW_REQUIRED, REFUND_FAILED ->
                     throw new PaymentException(ErrorCode.PAYMENT_MANUAL_REVIEW);
 
             case UNKNOWN_PAYMENT ->
