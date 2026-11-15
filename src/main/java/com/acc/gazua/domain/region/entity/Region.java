@@ -30,4 +30,20 @@ public class Region {
     private String riCode; //리 코드
 
     private String regionName;
+
+    private static final String SIDO_SUFFIX = "00000000"; //시군구 + 읍면동 + 리
+    private static final String SIGUNGU_SUFFIX = "00000"; //읍면동 + 리
+
+    public static String sigunguCodeOf(String sidoCode, String sigunguCode) {
+        return sidoCode + sigunguCode + SIGUNGU_SUFFIX; // "27" + "170" -> "2717000000"
+    }
+
+    public static String sidoCodeOf(String sidoCode) {
+        return sidoCode + SIDO_SUFFIX; // "27" -> "2700000000"
+    }
+
+    // 다음 우편번호 bcode(10자리 법정동) -> 시군구 코드
+    public static String sigunguCodeFromLegalDong(String bcode) {
+        return bcode.substring(0,5) + SIGUNGU_SUFFIX; // "2717010900" -> "2717000000"
+    }
 }

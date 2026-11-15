@@ -131,7 +131,7 @@ public class AccommodationService {
             throw new UserException(ErrorCode.NOT_HOST_USER);
         }
 
-        Region region = regionRepository.findByRegionCode(request.regionCode())
+        Region region = regionRepository.findByRegionCode(Region.sigunguCodeFromLegalDong(request.regionCode()))
                 .orElseThrow(() -> new RegionException(ErrorCode.REGION_NOT_FOUND));
 
         Accommodation accommodation = Accommodation.builder()

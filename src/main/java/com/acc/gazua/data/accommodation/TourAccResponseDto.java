@@ -1,6 +1,7 @@
 package com.acc.gazua.data.accommodation;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,7 +39,11 @@ public class TourAccResponseDto {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Item{
         private String overview;
-        private String lDongRegnCd;
-        private String lDongSignguCd;
+
+        @JsonProperty("lDongRegnCd")
+        private String lDongRegnCd; // 법정동 시도 코드 (예: "27")
+
+        @JsonProperty("lDongSignguCd")
+        private String lDongSignguCd; // 법정동 시군구 코드 (예: "170")
     }
 }

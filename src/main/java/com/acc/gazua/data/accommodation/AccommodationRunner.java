@@ -16,6 +16,7 @@ import com.acc.gazua.domain.user.entity.Role;
 import com.acc.gazua.domain.user.entity.User;
 import com.acc.gazua.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -23,10 +24,12 @@ import org.springframework.stereotype.Component;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.data-init.enabled", havingValue = "true", matchIfMissing = true)
@@ -50,17 +53,25 @@ public class AccommodationRunner implements CommandLineRunner {
         List<TourAccListResponseDto.Item> items = searchStayList.searchAccommodation(1);
         for (TourAccListResponseDto.Item acc : items) {
             TourAccResponseDto.Item description = searchStay.searchStayDescription(acc.getContentid());
+
+            Optional<Region> region = resolveRegion(description);
+            if (region.isEmpty()) {
+                log.warn("지역 매핑 실패로 건너뜀: contentId={}, sido={}, sigungu={}", acc.getContentid(),
+                        description.getLDongRegnCd(), description.getLDongSignguCd());
+                continue;
+            }
+
             List<TourRoomResponseDto.Item> rooms = searchRoom.searchRoom(acc.getContenttypeid(), acc.getContentid());
             if(rooms == null) continue;
             if(rooms.get(0).getRoomtitle() == null || rooms.get(0).getRoomtitle().isBlank()) continue;
-            Accommodation savedAccommodation = createAndSaveAccommodation(acc, rooms, description);
+            Accommodation savedAccommodation = createAndSaveAccommodation(acc, rooms, description,region.get());
             createAndSaveRooms(rooms,savedAccommodation);
         }
 
 
     }
 
-    public Accommodation createAndSaveAccommodation(TourAccListResponseDto.Item acc, List<TourRoomResponseDto.Item> rooms,TourAccResponseDto.Item description){
+    public Accommodation createAndSaveAccommodation(TourAccListResponseDto.Item acc, List<TourRoomResponseDto.Item> rooms,TourAccResponseDto.Item description,Region region){
         OptionalInt maxCapacity = rooms.stream()
                 .map(TourRoomResponseDto.Item::getRoommaxcount)
                 .filter(count -> count != null && !count.isBlank())
@@ -79,9 +90,6 @@ public class AccommodationRunner implements CommandLineRunner {
                 .role(Role.HOST)
                 .nickname(userRequest.nickname())
                 .build();
-
-        Region region = regionRepository.findByRegionCodeAndSigunguCode(description.getLDongRegnCd(), description.getLDongSignguCd())
-                .orElseGet(() -> new Region(1L,"11","000","000","00","서울특별시","종로구"));
 
         Accommodation accommodation = Accommodation.builder()
                 .host(host)
@@ -174,5 +182,23 @@ public class AccommodationRunner implements CommandLineRunner {
         if("B02011100".equals(cat3) || title.contains("한옥")) return AccommodationType.HANOK;
         if("B02011700".equals(cat3) || title.contains("게스트")) return AccommodationType.GUEST_HOUSE;
         return AccommodationType.CAMPING;
+    }
+
+    private Optional<Region> resolveRegion(TourAccResponseDto.Item description) {
+        String sido = description.getLDongRegnCd();
+        String sigungu = description.getLDongSignguCd();
+
+        if (sido == null || sido.length() != 2) {
+            return Optional.empty();
+        }
+
+        // 1순위: 시군구 단위
+        if (sigungu != null && sigungu.length() == 3) {
+            Optional<Region> bySigungu = regionRepository.findByRegionCode(Region.sigunguCodeOf(sido, sigungu));
+            if(bySigungu.isPresent()) return bySigungu;
+        }
+
+        // 2순위: 시군구 코드가 없거나 개편 등으로 매칭 안 되면 시도 단위
+        return regionRepository.findByRegionCode(Region.sidoCodeOf(sido));
     }
 }

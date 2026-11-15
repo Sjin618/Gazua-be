@@ -23,7 +23,9 @@ public class RegionCodeRunner implements CommandLineRunner {
         //2056번 실행
         for (int i = 1; i <= 5; i++) {
             List<RegionCodeResponse.Row> rows = searchRegionCode.searchRegionCode(i);
-            createAndSaveRegionCode(rows);
+            createAndSaveRegionCode(rows.stream()
+                    .filter(r -> "000".equals(r.getUmdCd()) && "00".equals(r.getRiCd()))
+                    .toList());
         }
     }
 
